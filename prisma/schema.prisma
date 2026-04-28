@@ -1,0 +1,313 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum RecurrenceType {
+  MONTHLY
+  EVERY_TWO_MONTHS
+  QUARTERLY
+  SEMI_YEARLY
+  YEARLY
+  WEEKLY
+  EVERY_FOUR_WEEKS
+  ONE_TIME
+  IRREGULAR
+  CUSTOM
+  UNCLEAR
+}
+
+enum RecurrenceClass {
+  RECURRING
+  ONE_TIME
+  UNCLEAR
+}
+
+enum LimitationType {
+  UNLIMITED
+  UNTIL_DATE
+  NUMBER_OF_PAYMENTS
+  UNKNOWN
+  NOT_APPLICABLE
+}
+
+enum LifecycleStatus {
+  ACTIVE
+  INACTIVE
+  ENDED
+}
+
+enum ConfidenceStatus {
+  SAFE
+  ESTIMATED
+  AUTO_DETECTED
+  MANUALLY_CONFIRMED
+  NEEDS_REVIEW
+  OBSOLETE
+  REPLACED
+  IGNORED
+}
+
+enum SourceType {
+  MANUAL
+  IMPORT
+  AI
+  SYSTEM
+}
+
+enum PaymentType {
+  NORMAL
+  PREPAYMENT
+  INSTALLMENT
+  REFUND
+  CORRECTION
+  REVERSAL
+  INCOME
+  UNKNOWN
+}
+
+enum PaymentStatus {
+  PLANNED
+  BOOKED
+  RECONCILED
+  NEEDS_REVIEW
+  IGNORED
+}
+
+enum ImportSuggestionStatus {
+  OPEN
+  ACCEPTED
+  REJECTED
+  POSTPONED
+  DUPLICATE
+  EDITED
+}
+
+enum ImportStatus {
+  NEW
+  IMPORTED
+  NEEDS_REVIEW
+  LINKED
+  IGNORED
+  DUPLICATE
+}
+
+enum ReportStatus {
+  SUCCESS
+  FAILED
+}
+
+model CostPosition {
+  id                   String             @id @default(cuid())
+  title                String
+  providerId           String?
+  categoryId           String?
+  householdScopeId     String?
+  amountCents          Int
+  currency             String             @default("EUR")
+  recurrenceType       RecurrenceType      @default(UNCLEAR)
+  recurrenceCustomRule String?
+  recurrenceClass      RecurrenceClass     @default(UNCLEAR)
+  limitationType       LimitationType      @default(UNKNOWN)
+  paymentCountLimit    Int?
+  startDate            DateTime?
+  endDate              DateTime?
+  nextDueDate          DateTime?
+  paymentMethod        String?
+  status               LifecycleStatus     @default(ACTIVE)
+  confidenceStatus     ConfidenceStatus    @default(NEEDS_REVIEW)
+  monthlyValueCents    Int                 @default(0)
+  yearlyValueCents     Int                 @default(0)
+  sourceType           SourceType          @default(MANUAL)
+  notes                String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  provider             Provider?           @relation(fields: [providerId], references: [id])
+  category             Category?           @relation(fields: [categoryId], references: [id])
+  householdScope       HouseholdScope?     @relation(fields: [householdScopeId], references: [id])
+  payments             Payment[]
+  documents            Document[]
+  importSuggestions    ImportSuggestion[]
+  versions             CostPositionVersion[]
+
+  @@index([status])
+  @@index([recurrenceClass])
+  @@index([recurrenceType])
+  @@index([limitationType])
+  @@index([nextDueDate])
+}
+
+model CostPositionVersion {
+  id                String          @id @default(cuid())
+  costPositionId    String
+  validFrom         DateTime
+  validTo           DateTime?
+  amountCents       Int
+  recurrenceType    RecurrenceType
+  recurrenceClass   RecurrenceClass
+  limitationType    LimitationType
+  monthlyValueCents Int
+  yearlyValueCents  Int
+  notes             String?
+  sourceType        SourceType      @default(MANUAL)
+  createdAt         DateTime        @default(now())
+
+  costPosition      CostPosition    @relation(fields: [costPositionId], references: [id], onDelete: Cascade)
+
+  @@index([costPositionId, validFrom])
+}
+
+model Payment {
+  id               String           @id @default(cuid())
+  costPositionId   String?
+  providerId       String?
+  date             DateTime
+  amountCents      Int
+  currency         String           @default("EUR")
+  paymentType      PaymentType      @default(NORMAL)
+  description      String?
+  bankAccountRef   String?
+  sourceDocumentId String?
+  status           PaymentStatus    @default(BOOKED)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  costPosition     CostPosition?    @relation(fields: [costPositionId], references: [id])
+  provider         Provider?        @relation(fields: [providerId], references: [id])
+  sourceDocument   Document?        @relation("PaymentSourceDocument", fields: [sourceDocumentId], references: [id])
+  linkedDocuments  Document[]       @relation("DocumentLinkedPayment")
+  importSuggestions ImportSuggestion[]
+
+  @@index([date])
+  @@index([paymentType])
+  @@index([status])
+}
+
+model Provider {
+  id             String          @id @default(cuid())
+  name           String
+  normalizedName String          @unique
+  aliasesJson    String          @default("[]")
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  costPositions  CostPosition[]
+  payments       Payment[]
+  documents      Document[]
+
+  @@index([name])
+}
+
+model Category {
+  id               String          @id @default(cuid())
+  name             String
+  parentCategoryId String?
+  active           Boolean         @default(true)
+  sortOrder        Int             @default(0)
+
+  parent           Category?       @relation("CategoryChildren", fields: [parentCategoryId], references: [id])
+  children         Category[]      @relation("CategoryChildren")
+  costPositions    CostPosition[]
+
+  @@unique([name, parentCategoryId])
+  @@index([active, sortOrder])
+}
+
+model HouseholdScope {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  active        Boolean        @default(true)
+  sortOrder     Int            @default(0)
+
+  costPositions CostPosition[]
+}
+
+model Document {
+  id                   String          @id @default(cuid())
+  filePath             String
+  fileName             String
+  fileHash             String?
+  documentType         String          @default("UNKLAR")
+  documentGroup        String          @default("SONDERBELEG")
+  documentDate         DateTime?
+  providerId           String?
+  amountCents          Int?
+  currency             String          @default("EUR")
+  extractionJson       String?
+  importStatus         ImportStatus    @default(NEW)
+  linkedCostPositionId String?
+  linkedPaymentId      String?
+  notes                String?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  provider             Provider?       @relation(fields: [providerId], references: [id])
+  linkedCostPosition   CostPosition?   @relation(fields: [linkedCostPositionId], references: [id])
+  linkedPayment        Payment?        @relation("DocumentLinkedPayment", fields: [linkedPaymentId], references: [id])
+  sourcedPayments      Payment[]       @relation("PaymentSourceDocument")
+  importSuggestions    ImportSuggestion[]
+
+  @@index([fileHash])
+  @@index([importStatus])
+  @@index([documentType])
+}
+
+model ImportSuggestion {
+  id                   String                 @id @default(cuid())
+  sourceDocumentId     String?
+  suggestionType       String
+  suggestedAction      String
+  extractedJson        String
+  confidence           Float                  @default(0)
+  status               ImportSuggestionStatus @default(OPEN)
+  linkedCostPositionId String?
+  linkedPaymentId      String?
+  notes                String?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  sourceDocument       Document?              @relation(fields: [sourceDocumentId], references: [id])
+  linkedCostPosition   CostPosition?          @relation(fields: [linkedCostPositionId], references: [id])
+  linkedPayment        Payment?               @relation(fields: [linkedPaymentId], references: [id])
+
+  @@index([status])
+  @@index([suggestionType])
+}
+
+model ReportRun {
+  id          String       @id @default(cuid())
+  reportType  String
+  filePath    String
+  format      String
+  generatedAt DateTime     @default(now())
+  status      ReportStatus @default(SUCCESS)
+  message     String?
+
+  @@index([generatedAt])
+  @@index([reportType])
+}
+
+model BackupRun {
+  id          String       @id @default(cuid())
+  backupType  String
+  filePath    String
+  generatedAt DateTime     @default(now())
+  status      ReportStatus @default(SUCCESS)
+  message     String?
+
+  @@index([generatedAt])
+  @@index([backupType])
+}
+
+model AppSetting {
+  key       String   @id
+  value     String
+  label     String?
+  updatedAt DateTime @updatedAt
+}
