@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Node
+node_modules/
+.next/
+dist/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment
+.env
+.env.*
+!.env.example
+apps/frontend/vite.config.js
+apps/frontend/vite.config.d.ts
+
+# Local data and builds
+.codex/
+*.sqlite
+*.sqlite3
+*.db
+data/
+tmp/
+tmp_*/
+tmp_*.jsonl
+/documents/
+apps/backend/documents/
+haushaltskosten.runtime.json
+apps/backend/haushaltskosten.runtime.json
+Haushaltskosten-Wissen/.obsidian/
+KI-Wissen-Haushaltskosten/.obsidian/
+KI-Wissen-Haushaltskosten/01 Rohquellen/externe-quellen/
+AGENTS.local.md
+
+# Editor and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
