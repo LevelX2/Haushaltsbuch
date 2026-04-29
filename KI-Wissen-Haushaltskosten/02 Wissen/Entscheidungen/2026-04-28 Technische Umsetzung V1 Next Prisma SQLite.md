@@ -25,7 +25,7 @@ Der Stack passt zur Vorgabe, Frontend und Backend zunächst nicht zu trennen. Se
 Die produktive SQLite-Datei liegt standardmäßig unter:
 
 ```text
-C:\Users\Lui\AppData\Local\Haushaltsbuch\Haushaltsbuch.sqlite
+C:\Users\<Benutzer>\AppData\Local\Haushaltsbuch\Haushaltsbuch.sqlite
 ```
 
 OneDrive wird nicht als produktiver Datenbankort genutzt, sondern für Reports, Importordner, Backups und Exporte.

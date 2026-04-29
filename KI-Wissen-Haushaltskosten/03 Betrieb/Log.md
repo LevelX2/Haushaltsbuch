@@ -2,6 +2,25 @@
 
 ## 2026-04
 
+### [2026-04-29] wartung | MIT-Lizenz ergänzt
+- Anlass oder Quelle: Nutzerentscheidung, vor der GitHub-Anbindung eine Lizenz in das Repository aufzunehmen.
+- Änderungen:
+  - `LICENSE` mit MIT-Lizenz und neutralem Rechteinhaber `Haushaltskosten contributors` angelegt.
+  - `README.md` um einen kurzen Lizenzabschnitt ergänzt.
+
+### [2026-04-29] wartung | GitHub-Vorprüfung für private Pfade und Gitignore
+- Anlass oder Quelle: Nutzerwunsch, das Repository vor der GitHub-Anbindung auf persönliche Informationen, Datenbankdateien und fehlende Ignore-Regeln zu prüfen.
+- Änderungen:
+  - Commitbare Beispielpfade in `.env.example`, `README.md`, `docs/ARCHITEKTUR.md` und der technischen Entscheidungsseite wurden von benutzerspezifischen Windows-Pfaden auf generische Benutzerpfade umgestellt.
+  - Die betroffenen Rohquellen wurden nach ausdrücklicher Nutzerfreigabe anonymisiert.
+  - Die `README.md` wurde für GitHub-Sichtbarkeit mit Funktionsumfang, Schnellstart, lokalen Daten und Datenschutzhinweisen überarbeitet.
+  - Seed-Daten und UI-Beispieltext verwenden keine persönlichen Namen mehr.
+  - Wissensseiten zur lokalen Agent-Anbindung beschreiben die persönliche Wissensbasis generisch.
+- Verifikation:
+  - `.env`, `AGENTS.local.md`, `.next/`, `node_modules/`, `tmp/` und `tsconfig.tsbuildinfo` sind ignoriert.
+  - Datenbankmuster `*.sqlite`, `*.sqlite3`, `*.db` sowie `data/` und lokale Dokumentordner sind in `.gitignore` abgedeckt.
+  - `npm run typecheck` erfolgreich.
+
 ### [2026-04-28] umsetzung | Kategorie-Filter für Kostenpositionen ergänzt
 - Anlass oder Quelle: Nutzerwunsch, Kostenpositionen nach Kategorie filtern zu können.
 - Änderungen:

@@ -276,7 +276,7 @@ export function InboxWorkspace() {
                   id="quickNotes"
                   value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  placeholder="Zum Beispiel: Abo für Nahrungsergänzungsmittel, 30 Tage, Sabine oder Lui."
+                  placeholder="Zum Beispiel: Abo für Nahrungsergänzungsmittel, 30 Tage, Haushalt oder privat."
                 />
               </div>
               <div className="review-data">

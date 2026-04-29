@@ -22,12 +22,12 @@ Die Anwendung `Haushaltskosten` soll als lokale Haushaltsbuch- und Fixkostenübe
 Standardpfade:
 
 ```text
-C:\Users\Lui\AppData\Local\Haushaltsbuch
+C:\Users\<Benutzer>\AppData\Local\Haushaltsbuch
 ├─ Haushaltsbuch.sqlite
 ├─ logs
 └─ temp
 
-C:\Users\Lui\OneDrive\Haushaltsbuch
+C:\Users\<Benutzer>\OneDrive\Haushaltsbuch
 ├─ Reports
 ├─ Import
 ├─ Backup
@@ -122,7 +122,7 @@ Wohnen, Energie, Wasser / Abwasser, Versicherungen, Telekommunikation, Mobilitä
 
 ## Haushaltsbezug
 Optionaler Bezug:
-gesamter Haushalt, Ludwig, Sabine, Hund / Haustier, Haus / Immobilie, Auto, sonstige Person, sonstiger Zweck, unklar.
+gesamter Haushalt, Person 1, Person 2, Hund / Haustier, Haus / Immobilie, Auto, sonstige Person, sonstiger Zweck, unklar.
 
 ## Belege und Dokumente
 Zu unterscheiden sind unter anderem Rechnung, Dauerrechnung, Beitragsrechnung, Beitragsmitteilung, Vertrag, Vertragsänderung, Kündigungsbestätigung, Abschlagsplan, Jahresabrechnung, Bescheid, Zahlungsaufforderung, Mahnung, Gutschrift, Rückerstattung, Kontoauszug, Kreditkartenabrechnung, Zahlungsdienstleister-Beleg, Kassenbon, Angebot, Auftragsbestätigung, Versicherungsunterlage, Darlehensunterlage, Leasingplan, Miet-/Nebenkostenunterlage, Wartungsvertrag, Abo-Bestätigung, Einkommensbeleg und Steuerbescheid.

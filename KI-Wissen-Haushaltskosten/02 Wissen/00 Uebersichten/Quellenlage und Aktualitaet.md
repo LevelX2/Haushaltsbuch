@@ -16,7 +16,7 @@ tags:
 - Projektstartauftrag mit Wunsch nach einer Umgebung vergleichbar zu `Labordaten`.
 - Erste fachliche Zielbeschreibung für laufende, dauerhafte Haushaltskosten.
 - Detaillierte zweite Projektvorgabe für ein lokales Fullstack-MVP mit V1-Abgrenzung, Datenmodell, UI-Seiten, Reports, Backups und späteren Importperspektiven.
-- Lokale Anbindung an das Haupt-Vault `mein-wissen` über `AGENTS.local.md`.
+- Lokale Anbindung an eine persönliche Wissensbasis über `AGENTS.local.md`.
 - Projektbezogene KI-Wissensbasis mit Grundstruktur.
 - Implementierte App-Architektur und technische Dokumentation in `docs/ARCHITEKTUR.md`.
 

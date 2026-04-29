@@ -30,8 +30,8 @@ const categories = [
 
 const householdScopes = [
   "gesamter Haushalt",
-  "Ludwig",
-  "Sabine",
+  "Person 1",
+  "Person 2",
   "Hund / Haustier",
   "Haus / Immobilie",
   "Auto",

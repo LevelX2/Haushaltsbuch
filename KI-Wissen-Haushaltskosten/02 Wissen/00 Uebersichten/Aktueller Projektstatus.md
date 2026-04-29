@@ -20,7 +20,7 @@ Diese Seite beschreibt den aktuellen Projektstand als Snapshot. Zeitliche Abfolg
 ## Umgesetzt
 - Das Repository ist als Git-Projekt initialisiert.
 - Eine commitbare `AGENTS.md` mit projektbezogenen Regeln, Einstiegspunkten, Prioritätslogik, Branch-Strategie und lokalem Abschlusskontrakt ist angelegt.
-- Eine lokale, nicht versionierte `AGENTS.local.md` bindet das persönliche Haupt-Vault `mein-wissen` und den Projekttyp `Web-Fachsystem` an.
+- Eine lokale, nicht versionierte `AGENTS.local.md` kann eine persönliche Wissensbasis und den Projekttyp `Web-Fachsystem` anbinden.
 - Die projektbezogene KI-Wissensbasis `KI-Wissen-Haushaltskosten/` ist mit Startstruktur, Index, Prozessseiten, Statusseite, Log und erster Rohquelle angelegt.
 - `.editorconfig`, `.gitattributes`, `.gitignore` und ein kurzes `README.md` sind vorhanden.
 - Die V1-Anwendung ist als Next.js-App mit App Router, TypeScript, Prisma Client und SQLite angelegt.

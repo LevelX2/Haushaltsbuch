@@ -18,7 +18,7 @@ Zentrale Leitregel: Jeder Input wird gespeichert oder im Prüfeingang gehalten, 
 Standard lokal:
 
 ```text
-C:\Users\Lui\AppData\Local\Haushaltsbuch
+C:\Users\<Benutzer>\AppData\Local\Haushaltsbuch
 ├─ Haushaltsbuch.sqlite
 ├─ logs
 └─ temp
@@ -27,7 +27,7 @@ C:\Users\Lui\AppData\Local\Haushaltsbuch
 Standard OneDrive:
 
 ```text
-C:\Users\Lui\OneDrive\Haushaltsbuch
+C:\Users\<Benutzer>\OneDrive\Haushaltsbuch
 ├─ Reports
 ├─ Import
 ├─ Backup
