@@ -78,5 +78,19 @@ Relevante Informationen können sicher, geschätzt, automatisch erkannt, manuell
 
 KI- oder Importdaten dürfen nicht denselben Vertrauensstatus haben wie manuell bestätigte Daten und dürfen bestehende Daten nicht ungeprüft überschreiben.
 
+Wenn ein Beleg nicht ausreichend automatisch erkannt wird, muss im Prüfeingang eine manuelle Einordnung ergänzt werden können. Diese Einordnung beschreibt den fachlichen Inhalt oder Zweck des Belegs, zum Beispiel ein 30-Tage-Abo für Nahrungsergänzungsmittel und den Haushalts- oder Personenbezug. Zusätzlich soll im Prüfeingang eine Kostengruppe aus den gepflegten Kategorien angegeben werden können. Diese Angaben unterstützen die spätere korrekte Klassifikation, ohne den produktiven Bestand automatisch zu verändern.
+
+## Zusammengesetzte Bescheide mit Vorauszahlungen
+Gebühren- und Abgabenbescheide können mehrere fachliche Vorgänge in einem Dokument enthalten. Typisch sind eine endgültige Abrechnung für einen zurückliegenden Zeitraum, ein neuer Vorauszahlungsbescheid für den Folgezeitraum, eine Fälligkeitstabelle sowie Guthaben, Nachzahlungen oder Verrechnungen.
+
+Solche Belege dürfen nicht nur als einzelner OCR-Text oder als einzelner Gesamtbetrag übernommen werden. Die Anwendung muss sie fachlich zerlegen:
+- Der Beleg bleibt als Quelle mit Bescheidart, Datum, Anbieter, Objekt oder Aktenzeichen erhalten.
+- Der Abrechnungsteil beschreibt den endgültig festgesetzten Betrag für den abgerechneten Zeitraum.
+- Der Vorauszahlungsteil beschreibt die neue laufende Kostenposition oder Kostenpositionsversion mit Gültigkeitszeitraum und Jahresbetrag.
+- Fälligkeiten werden als erwartete Zahlungen oder Forderungspositionen erfasst.
+- Guthaben, Nachzahlungen und Verrechnungen werden getrennt von der laufenden Kostenposition dokumentiert, damit Planwert, tatsächliche Kontobewegung und Auswertung nicht vermischt werden.
+
+Beispiele sind Abfallgebühren, Grundsteuer, Wasser und Abwasser, Energieabschläge und ähnliche öffentliche oder versorgerbezogene Bescheide.
+
 ## V1-Grenzen
 V1 ist auf manuelle Erfassung, Dashboard, Listen, Berechnung, Fälligkeiten, Reports, Backup, Dokumentmetadaten und Prüfeingang fokussiert. Automatische PDF-, Kontoauszugs-, E-Mail- und Amazon-Importe sind fachlich vorbereitet, aber noch nicht umgesetzt.
