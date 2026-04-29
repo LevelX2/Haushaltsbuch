@@ -27,7 +27,7 @@ const groups = [
     items: [
       { href: "/", label: "Dashboard", icon: Gauge },
       { href: "/kostenpositionen", label: "Kostenpositionen", icon: WalletCards },
-      { href: "/faelligkeiten", label: "Fälligkeiten", icon: CalendarDays },
+      { href: "/faelligkeiten", label: "Zahlungsprognose", icon: CalendarDays },
     ],
   },
   {

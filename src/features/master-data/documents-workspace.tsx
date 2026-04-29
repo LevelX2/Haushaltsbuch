@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Save, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Save, Search } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { documentGroups, documentTypes } from "@/lib/domain";
 import { formatDate } from "@/lib/format";
@@ -45,6 +45,7 @@ export function DocumentsWorkspace() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [selected, setSelected] = useState<DocumentRow | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -64,6 +65,7 @@ export function DocumentsWorkspace() {
 
   function edit(item: DocumentRow) {
     setSelected(item);
+    setIsFormOpen(true);
     setForm({
       filePath: item.filePath,
       fileName: item.fileName,
@@ -82,6 +84,13 @@ export function DocumentsWorkspace() {
   function reset() {
     setSelected(null);
     setForm(emptyForm);
+    setIsFormOpen(false);
+  }
+
+  function createNew() {
+    setSelected(null);
+    setForm(emptyForm);
+    setIsFormOpen(true);
   }
 
   async function submit(event: React.FormEvent) {
@@ -109,7 +118,7 @@ export function DocumentsWorkspace() {
         subtitle="Dokumente werden als Quellen mit Pfad, Typ, Importstatus und optionaler Verknüpfung geführt. Dateien selbst bleiben außerhalb der Datenbank."
         actions={
           <>
-            <button className="button secondary" onClick={reset} type="button" title="Neues Dokument">
+            <button className="button secondary" onClick={createNew} type="button" title="Neues Dokument">
               <Plus size={17} /> Neu
             </button>
             <button className="button secondary" onClick={load} type="button" title="Aktualisieren">
@@ -157,9 +166,22 @@ export function DocumentsWorkspace() {
             </tbody>
           </table>
         </div>
-        <form className="panel" onSubmit={submit}>
-          <h2 className="panel-title">{selected ? "Dokument bearbeiten" : "Dokument erfassen"}</h2>
-          <div className="form-grid">
+        <form className="panel collapsible-panel" onSubmit={submit}>
+          <button
+            className="panel-toggle"
+            type="button"
+            onClick={() => setIsFormOpen((current) => !current)}
+            aria-expanded={isFormOpen}
+          >
+            <span>
+              {isFormOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+              <span className="panel-title">{selected ? "Dokument bearbeiten" : "Dokument erfassen"}</span>
+            </span>
+            <span className="small">{isFormOpen ? "Einklappen" : "Manuell erfassen"}</span>
+          </button>
+          {isFormOpen ? (
+          <>
+            <div className="form-grid">
             <div className="field full">
               <label htmlFor="filePath">Dateipfad</label>
               <input id="filePath" value={form.filePath} onChange={(e) => setForm({ ...form, filePath: e.target.value })} required />
@@ -246,12 +268,14 @@ export function DocumentsWorkspace() {
               <label htmlFor="notes">Notiz</label>
               <textarea id="notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
-          </div>
-          <div className="toolbar" style={{ marginTop: 16 }}>
-            <button className="button" type="submit">
-              <Save size={17} /> Speichern
-            </button>
-          </div>
+            </div>
+            <div className="toolbar" style={{ marginTop: 16 }}>
+              <button className="button" type="submit">
+                <Save size={17} /> Speichern
+              </button>
+            </div>
+          </>
+          ) : null}
         </form>
       </section>
     </div>

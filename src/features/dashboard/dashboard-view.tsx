@@ -21,7 +21,7 @@ type DashboardData = {
   };
   topCosts: CostRow[];
   byCategory: { category: string; monthlyValueCents: number; yearlyValueCents: number }[];
-  dueItems: CostRow[];
+  dueItems: ForecastRow[];
   oneTimeCosts: CostRow[];
   lastReport?: { generatedAt: string; filePath: string } | null;
   lastBackup?: { generatedAt: string; filePath: string } | null;
@@ -39,6 +39,24 @@ type CostRow = {
   nextDueDate?: string | null;
   provider?: { name: string } | null;
   category?: { name: string } | null;
+};
+
+type ForecastRow = {
+  id: string;
+  title: string;
+  amountCents: number;
+  currency: string;
+  expectedDate?: string | null;
+  paymentMethod: string;
+  providerName?: string | null;
+};
+
+type ForecastMonthGroup = {
+  key: string;
+  label: string;
+  paymentCount: number;
+  totalCents: number;
+  currency: string;
 };
 
 export function DashboardView() {
@@ -66,6 +84,7 @@ export function DashboardView() {
     () => Math.max(1, ...(data?.byCategory.map((row) => row.monthlyValueCents) ?? [1])),
     [data],
   );
+  const dueMonths = useMemo(() => groupForecastByMonth(data?.dueItems ?? []), [data?.dueItems]);
 
   return (
     <div className="page">
@@ -188,24 +207,22 @@ export function DashboardView() {
           <table>
             <thead>
               <tr>
-                <th>Nächste Fälligkeiten</th>
-                <th>Anbieter</th>
-                <th>Datum</th>
-                <th>Betrag</th>
+                <th>Nächste erwartete Zahlungen</th>
+                <th>Anzahl</th>
+                <th>Monatssumme</th>
               </tr>
             </thead>
             <tbody>
-              {data?.dueItems.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.title}</td>
-                  <td>{item.provider?.name ?? "-"}</td>
-                  <td>{formatDate(item.nextDueDate)}</td>
-                  <td>{formatMoney(item.amountCents, item.currency)}</td>
+              {dueMonths.map((month) => (
+                <tr key={month.key}>
+                  <td>{month.label}</td>
+                  <td>{month.paymentCount}</td>
+                  <td>{formatMoney(month.totalCents, month.currency)}</td>
                 </tr>
               ))}
-              {!data?.dueItems.length ? (
+              {!dueMonths.length ? (
                 <tr>
-                  <td colSpan={4}>Keine Fälligkeiten in den nächsten 90 Tagen.</td>
+                  <td colSpan={3}>Keine erwarteten Zahlungen in den nächsten 6 Monaten.</td>
                 </tr>
               ) : null}
             </tbody>
@@ -214,4 +231,37 @@ export function DashboardView() {
       </section>
     </div>
   );
+}
+
+function groupForecastByMonth(rows: ForecastRow[]): ForecastMonthGroup[] {
+  const groups = new Map<string, ForecastMonthGroup>();
+
+  for (const row of rows) {
+    if (!row.expectedDate) {
+      continue;
+    }
+
+    const date = new Date(row.expectedDate);
+    if (Number.isNaN(date.getTime())) {
+      continue;
+    }
+
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const group = groups.get(key) ?? {
+      key,
+      label: formatMonth(date),
+      paymentCount: 0,
+      totalCents: 0,
+      currency: row.currency,
+    };
+    group.paymentCount += 1;
+    group.totalCents += row.amountCents;
+    groups.set(key, group);
+  }
+
+  return Array.from(groups.values()).sort((left, right) => left.key.localeCompare(right.key));
+}
+
+function formatMonth(date: Date) {
+  return new Intl.DateTimeFormat("de-DE", { month: "long", year: "numeric" }).format(date);
 }

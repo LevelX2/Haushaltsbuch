@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Plus, Save, Search, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronRight, Plus, Save, Search, X } from "lucide-react";
 import { api } from "@/lib/api-client";
 import {
   confidenceStatusLabels,
@@ -87,7 +87,9 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
   const [scopes, setScopes] = useState<Option[]>([]);
   const [selected, setSelected] = useState<CostPosition | null>(null);
   const [form, setForm] = useState<FormState>(() => defaultForm(mode));
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [sort, setSort] = useState(mode === "due" ? "nextDueDate" : "monthlyValue");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -101,6 +103,7 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
     try {
       const params = new URLSearchParams();
       if (query.trim()) params.set("q", query.trim());
+      if (categoryFilter) params.set("categoryId", categoryFilter);
       if (mode === "one-time") params.set("recurrenceClass", "ONE_TIME");
       if (mode === "limited") params.set("limited", "true");
       if (mode === "due") params.set("due", "true");
@@ -128,7 +131,7 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, sort]);
+  }, [mode, sort, categoryFilter]);
 
   const totals = useMemo(
     () => ({
@@ -141,6 +144,7 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
 
   function edit(item: CostPosition) {
     setSelected(item);
+    setIsFormOpen(true);
     setForm({
       title: item.title,
       providerId: item.providerId ?? "",
@@ -168,6 +172,15 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
     setForm(defaultForm(mode));
     setMessage(null);
     setError(null);
+    setIsFormOpen(false);
+  }
+
+  function createNew() {
+    setSelected(null);
+    setForm(defaultForm(mode));
+    setMessage(null);
+    setError(null);
+    setIsFormOpen(true);
   }
 
   async function submit(event: React.FormEvent) {
@@ -226,7 +239,7 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
         subtitle={pageCopy.subtitle}
         actions={
           <>
-            <button className="button secondary" type="button" onClick={reset} title="Neue Position">
+            <button className="button secondary" type="button" onClick={createNew} title="Neue Position">
               <Plus size={17} /> Neu
             </button>
             <button className="button secondary" type="button" onClick={load} title="Liste aktualisieren">
@@ -279,6 +292,21 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
                 />
               </div>
               <div className="field">
+                <label htmlFor="categoryFilter">Kategorie</label>
+                <select
+                  id="categoryFilter"
+                  value={categoryFilter}
+                  onChange={(event) => setCategoryFilter(event.target.value)}
+                >
+                  <option value="">Alle Kategorien</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
                 <label htmlFor="sort">Sortierung</label>
                 <select id="sort" value={sort} onChange={(event) => setSort(event.target.value)}>
                   <option value="monthlyValue">Monatswert absteigend</option>
@@ -293,6 +321,16 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
               <button className="button" type="button" onClick={load} title="Suchen">
                 <Search size={17} /> Suchen
               </button>
+              {categoryFilter ? (
+                <button
+                  className="button secondary"
+                  type="button"
+                  onClick={() => setCategoryFilter("")}
+                  title="Kategoriefilter zurücksetzen"
+                >
+                  <X size={17} /> Filter löschen
+                </button>
+              ) : null}
             </div>
           </div>
 
@@ -344,9 +382,22 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
           </div>
         </div>
 
-        <form className="panel" onSubmit={submit}>
-          <h2 className="panel-title">{selected ? "Kostenposition bearbeiten" : pageCopy.formTitle}</h2>
-          <div className="form-grid">
+        <form className="panel collapsible-panel" onSubmit={submit}>
+          <button
+            className="panel-toggle"
+            type="button"
+            onClick={() => setIsFormOpen((current) => !current)}
+            aria-expanded={isFormOpen}
+          >
+            <span>
+              {isFormOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+              <span className="panel-title">{selected ? "Kostenposition bearbeiten" : pageCopy.formTitle}</span>
+            </span>
+            <span className="small">{isFormOpen ? "Einklappen" : "Manuell erfassen"}</span>
+          </button>
+          {isFormOpen ? (
+          <>
+            <div className="form-grid">
             <div className="field full">
               <label htmlFor="title">Bezeichnung</label>
               <input
@@ -550,21 +601,23 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
                 onChange={(event) => setForm({ ...form, notes: event.target.value })}
               />
             </div>
-          </div>
+            </div>
 
-          <div className="toolbar" style={{ marginTop: 16 }}>
-            <button className="button" type="submit" title="Speichern">
-              <Save size={17} /> Speichern
-            </button>
-            {selected ? (
-              <button className="button secondary" type="button" onClick={endSelected} title="Position beenden">
-                <CheckCircle2 size={17} /> Beenden
+            <div className="toolbar" style={{ marginTop: 16 }}>
+              <button className="button" type="submit" title="Speichern">
+                <Save size={17} /> Speichern
               </button>
-            ) : null}
-            <button className="button secondary" type="button" onClick={reset} title="Formular leeren">
-              <X size={17} /> Zurücksetzen
-            </button>
-          </div>
+              {selected ? (
+                <button className="button secondary" type="button" onClick={endSelected} title="Position beenden">
+                  <CheckCircle2 size={17} /> Beenden
+                </button>
+              ) : null}
+              <button className="button secondary" type="button" onClick={reset} title="Formular leeren">
+                <X size={17} /> Zurücksetzen
+              </button>
+            </div>
+          </>
+          ) : null}
         </form>
       </section>
     </div>

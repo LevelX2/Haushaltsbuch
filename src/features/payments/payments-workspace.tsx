@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Save, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Save, Search } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { paymentStatusLabels, paymentStatuses, paymentTypeLabels, paymentTypes } from "@/lib/domain";
 import { formatDate } from "@/lib/format";
@@ -42,6 +42,7 @@ export function PaymentsWorkspace() {
   const [providers, setProviders] = useState<Option[]>([]);
   const [costPositions, setCostPositions] = useState<Option[]>([]);
   const [form, setForm] = useState(emptyForm);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [selected, setSelected] = useState<Payment | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -68,6 +69,7 @@ export function PaymentsWorkspace() {
 
   function edit(payment: Payment) {
     setSelected(payment);
+    setIsFormOpen(true);
     setForm({
       costPositionId: payment.costPositionId ?? "",
       providerId: payment.providerId ?? "",
@@ -84,6 +86,13 @@ export function PaymentsWorkspace() {
   function reset() {
     setSelected(null);
     setForm(emptyForm);
+    setIsFormOpen(false);
+  }
+
+  function createNew() {
+    setSelected(null);
+    setForm(emptyForm);
+    setIsFormOpen(true);
   }
 
   async function submit(event: React.FormEvent) {
@@ -112,7 +121,7 @@ export function PaymentsWorkspace() {
         subtitle="Konkrete oder erwartete Kontobewegungen werden getrennt von Kostenpositionen erfasst, damit Plan/Ist-Abweichungen später prüfbar bleiben."
         actions={
           <>
-            <button className="button secondary" onClick={reset} type="button" title="Neue Zahlung">
+            <button className="button secondary" onClick={createNew} type="button" title="Neue Zahlung">
               <Plus size={17} /> Neu
             </button>
             <button className="button secondary" onClick={load} type="button" title="Aktualisieren">
@@ -163,9 +172,22 @@ export function PaymentsWorkspace() {
           </table>
         </div>
 
-        <form className="panel" onSubmit={submit}>
-          <h2 className="panel-title">{selected ? "Zahlung bearbeiten" : "Zahlung erfassen"}</h2>
-          <div className="form-grid">
+        <form className="panel collapsible-panel" onSubmit={submit}>
+          <button
+            className="panel-toggle"
+            type="button"
+            onClick={() => setIsFormOpen((current) => !current)}
+            aria-expanded={isFormOpen}
+          >
+            <span>
+              {isFormOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+              <span className="panel-title">{selected ? "Zahlung bearbeiten" : "Zahlung erfassen"}</span>
+            </span>
+            <span className="small">{isFormOpen ? "Einklappen" : "Manuell erfassen"}</span>
+          </button>
+          {isFormOpen ? (
+          <>
+            <div className="form-grid">
             <div className="field">
               <label htmlFor="date">Datum</label>
               <input id="date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
@@ -240,12 +262,14 @@ export function PaymentsWorkspace() {
                 onChange={(e) => setForm({ ...form, bankAccountRef: e.target.value })}
               />
             </div>
-          </div>
-          <div className="toolbar" style={{ marginTop: 16 }}>
-            <button className="button" type="submit">
-              <Save size={17} /> Speichern
-            </button>
-          </div>
+            </div>
+            <div className="toolbar" style={{ marginTop: 16 }}>
+              <button className="button" type="submit">
+                <Save size={17} /> Speichern
+              </button>
+            </div>
+          </>
+          ) : null}
         </form>
       </section>
     </div>

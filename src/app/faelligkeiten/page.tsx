@@ -1,5 +1,5 @@
-import { CostPositionWorkspace } from "@/features/cost-positions/cost-position-workspace";
+import { PaymentForecastWorkspace } from "@/features/payments/payment-forecast-workspace";
 
 export default function DueDatesPage() {
-  return <CostPositionWorkspace mode="due" />;
+  return <PaymentForecastWorkspace />;
 }

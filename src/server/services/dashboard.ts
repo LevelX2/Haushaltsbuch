@@ -1,12 +1,14 @@
-import { addDays, startOfYear } from "date-fns";
+import { addMonths, startOfYear } from "date-fns";
 import type { ConfidenceStatus } from "@prisma/client";
 import { prisma } from "@/server/prisma";
+import { getPaymentForecast } from "@/server/services/payment-forecast";
 
 const effectiveConfidence: ConfidenceStatus[] = ["SAFE", "ESTIMATED", "MANUALLY_CONFIRMED"];
 
 export async function getDashboard() {
   const today = new Date();
-  const in90Days = addDays(today, 90);
+  const inSixMonths = addMonths(today, 6);
+  const paymentForecast = await getPaymentForecast({ mode: "all-until", forecastUntil: inSixMonths });
   const activeFixedCosts = await prisma.costPosition.findMany({
     where: {
       status: "ACTIVE",
@@ -25,16 +27,6 @@ export async function getDashboard() {
     },
     include: { provider: true, category: true },
     orderBy: { amountCents: "desc" },
-  });
-
-  const dueItems = await prisma.costPosition.findMany({
-    where: {
-      status: "ACTIVE",
-      nextDueDate: { gte: today, lte: in90Days },
-    },
-    include: { provider: true, category: true },
-    orderBy: { nextDueDate: "asc" },
-    take: 20,
   });
 
   const openSuggestions = await prisma.importSuggestion.count({ where: { status: "OPEN" } });
@@ -75,7 +67,7 @@ export async function getDashboard() {
     byCategory: Array.from(byCategory.entries())
       .map(([category, values]) => ({ category, ...values }))
       .sort((a, b) => b.monthlyValueCents - a.monthlyValueCents),
-    dueItems,
+    dueItems: paymentForecast.rows.filter((item) => item.expectedDate && new Date(item.expectedDate) <= inSixMonths),
     oneTimeCosts: oneTimeCosts.slice(0, 10),
     lastReport,
     lastBackup,
