@@ -2,6 +2,15 @@
 
 ## 2026-04
 
+### [2026-04-29] wartung | GitHub Actions CI ergänzt
+- Anlass oder Quelle: Nutzerwunsch, sinnvolle GitHub Actions für das Repository direkt in GitHub anzulegen.
+- Änderungen:
+  - `.github/workflows/ci.yml` ergänzt.
+  - Der Workflow läuft bei Push auf `main` und bei Pull Requests.
+  - Die CI nutzt `windows-latest` mit Node.js 24 und führt `npm ci`, `npm run typecheck`, `npm run build` und `npm audit --omit=dev` aus.
+- Einordnung:
+  - `windows-latest` passt zum aktuellen lokalen Zielbetrieb mit Windows-AppData- und OneDrive-Pfaden.
+
 ### [2026-04-29] wartung | MIT-Lizenz ergänzt
 - Anlass oder Quelle: Nutzerentscheidung, vor der GitHub-Anbindung eine Lizenz in das Repository aufzunehmen.
 - Änderungen:
