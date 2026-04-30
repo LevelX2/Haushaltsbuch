@@ -30,6 +30,7 @@ Zu Beginn projektbezogener Arbeit zuerst diese Dateien lesen:
 - Allgemeine Entwicklungsregeln, globale Abschlusskommandos und projektübergreifende Wissenspflege-Regeln leben führend im persönlichen Haupt-Vault.
 - Globale Regeln sollen hier nicht vollständig dupliziert werden.
 - Projektspezifische Deltas, Beispiele und lokale Präzisierungen bleiben in dieser Wissensbasis.
+- Persönliche lokale Pfade, private Dokumentablagen und systembezogene Eingangsroutinen gehören nicht in commitbare Repo-Dateien. Sie werden über `AGENTS.local.md` im Haupt-Vault aufgelöst; für dieses Projekt verweist die lokale Datei auf die dortige Projektseite `03 Projekte/Haushaltsbuch.md`.
 
 ## Priorität und Fallback
 

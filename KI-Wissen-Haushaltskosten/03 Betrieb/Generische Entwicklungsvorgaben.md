@@ -36,15 +36,15 @@ Sie dient nicht dazu, jeden Einzelfall festzuhalten, sondern übertragbare Leitp
 - Kostenperioden und durchschnittliche Monatskosten sind früh fachlich sauber zu definieren, bevor ein Datenmodell umgesetzt wird.
 
 ## Dateiablage nach Belegeingang
-- Neue Belege werden im Eingang unter `C:\Users\Lui\OneDrive\Haushaltsbuch\Import\Rechnungseingang` geprüft.
-- Im Rechnungseingang kann zusätzlich die Metadaten-Datei `_Rechnungseingang_Index.jsonl` liegen.
-- Diese Datei wird von der Gmail- oder Dokumenteneingang-Routine gepflegt; jede Zeile ist ein eigenes JSON-Objekt zu genau einem Beleg.
+- Persönliche lokale Pfade, konkrete OneDrive-Ablagen und systembezogene Eingangsroutinen werden nicht in dieser commitbaren Projekt-Wissensbasis geführt.
+- Wenn `AGENTS.local.md` vorhanden ist, verweist es auf die lokale Projektseite im Haupt-Vault, die solche privaten Betriebsregeln enthält.
+- Neue Belege werden über einen lokal definierten Rechnungseingang geprüft.
+- Im Rechnungseingang kann zusätzlich eine JSONL-Metadaten-Datei liegen. Jede Zeile beschreibt genau einen Beleg.
 - Das Haushaltsbuch soll vorhandene JSONL-Metadaten bevorzugt als Vorbefüllung nutzen, um OCR-Arbeit zu sparen.
-- Die PDF-Datei bleibt trotzdem die verbindliche Primärquelle.
-- Wenn ein Metadatenfeld fehlt, unsicher ist oder widersprüchlich wirkt, muss die PDF geprüft werden.
+- Die Belegdatei selbst bleibt trotzdem die verbindliche Primärquelle.
+- Wenn ein Metadatenfeld fehlt, unsicher ist oder widersprüchlich wirkt, muss die Belegdatei geprüft werden.
 - Nach erfolgreicher Buchung kann der JSONL-Eintrag als verarbeitet markiert oder in ein verarbeitetes Log übernommen werden.
-- Nach erfolgreicher Verarbeitung werden Rechnungen und rechnungsartige Belege in die dauerhafte Unterlagenablage verschoben:
-  `C:\Users\Lui\OneDrive\Unterlagen\Rechnungen\<Jahr>`.
+- Nach erfolgreicher Verarbeitung werden Rechnungen und rechnungsartige Belege in die lokal definierte dauerhafte Unterlagenablage des passenden Jahres verschoben.
 - Der in der Anwendung gespeicherte Dokumentpfad muss nach dem Verschieben auf den endgültigen Ablagepfad zeigen.
 - Der Eingang soll nach einem abgeschlossenen Lauf nur noch die Rückmeldedatei oder bewusst offen gelassene Prüffälle enthalten.
 - Gegenbelege, zum Beispiel PayPal-Belege zu einer vorhandenen Rechnung, dürfen ebenfalls abgelegt werden, zählen aber nicht als zusätzliche Ausgabe.
