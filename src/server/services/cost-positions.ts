@@ -8,6 +8,10 @@ const emptyToNull = z.preprocess((value) => (value === "" ? null : value), z.str
 const dateValue = emptyToNull.transform((value) => (value ? new Date(`${value}T00:00:00`) : null));
 const amountValue = z.union([z.string(), z.number()]).transform(eurosToCents);
 
+const mergeCostPositionInput = z.object({
+  targetCostPositionId: z.string().min(1),
+});
+
 export const costPositionInput = z.object({
   title: z.string().trim().min(1, "Bezeichnung fehlt"),
   providerId: emptyToNull,
@@ -76,8 +80,8 @@ export async function listCostPositions(searchParams: URLSearchParams) {
     where.recurrenceClass = recurrenceClass as Prisma.EnumRecurrenceClassFilter["equals"];
   }
 
-  const status = searchParams.get("status");
-  if (status) {
+  const status = searchParams.get("status") ?? "ACTIVE";
+  if (status && status !== "ALL") {
     where.status = status as Prisma.EnumLifecycleStatusFilter["equals"];
   }
 
@@ -123,8 +127,15 @@ export async function getCostPosition(id: string) {
       provider: true,
       category: true,
       householdScope: true,
-      payments: { orderBy: { date: "desc" } },
+      payments: { include: { provider: true }, orderBy: { date: "desc" } },
       documents: { orderBy: { createdAt: "desc" } },
+      purchaseDocuments: {
+        include: {
+          provider: true,
+          paymentMatches: { include: { payment: true }, orderBy: { score: "desc" } },
+        },
+        orderBy: [{ documentDate: "desc" }, { createdAt: "desc" }],
+      },
       versions: { orderBy: { validFrom: "desc" } },
     },
   });
@@ -251,6 +262,87 @@ export async function updateCostPosition(id: string, raw: unknown) {
 
     return costPosition;
   });
+}
+
+export async function mergeCostPosition(id: string, raw: unknown) {
+  const input = mergeCostPositionInput.parse(raw);
+  if (id === input.targetCostPositionId) {
+    throw new Error("Eine Kostenposition kann nicht mit sich selbst zusammengeführt werden.");
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const [source, target] = await Promise.all([
+      tx.costPosition.findUniqueOrThrow({ where: { id }, include: { provider: true } }),
+      tx.costPosition.findUniqueOrThrow({ where: { id: input.targetCostPositionId } }),
+    ]);
+    if (!["ACTIVE", "ENDED"].includes(source.status) || ["IGNORED", "OBSOLETE", "REPLACED"].includes(source.confidenceStatus)) {
+      throw new Error("Diese Kostenposition kann nicht zusammengeführt werden.");
+    }
+    if (!["ACTIVE", "ENDED"].includes(target.status) || ["IGNORED", "OBSOLETE", "REPLACED"].includes(target.confidenceStatus)) {
+      throw new Error("Das Ziel muss eine nicht ersetzte Kostenposition sein.");
+    }
+
+    const [payments, documents, importSuggestions, purchaseDocuments] = await Promise.all([
+      tx.payment.updateMany({ where: { costPositionId: source.id }, data: { costPositionId: target.id } }),
+      tx.document.updateMany({ where: { linkedCostPositionId: source.id }, data: { linkedCostPositionId: target.id } }),
+      tx.importSuggestion.updateMany({ where: { linkedCostPositionId: source.id }, data: { linkedCostPositionId: target.id } }),
+      tx.purchaseDocument.updateMany({ where: { linkedCostPositionId: source.id }, data: { linkedCostPositionId: target.id } }),
+    ]);
+
+    const targetStartDate = earlierDate(target.startDate, source.startDate);
+    const targetNextDueDate = target.nextDueDate ?? source.nextDueDate;
+    const mergedAt = new Date();
+    const sourceNote = `Zusammengeführt in "${target.title}" (${target.id}) am ${mergedAt.toISOString().slice(0, 10)}.`;
+    const targetNote = `Dublette "${source.title}" (${source.id}) wurde am ${mergedAt.toISOString().slice(0, 10)} zusammengeführt.`;
+
+    const updatedTarget = await tx.costPosition.update({
+      where: { id: target.id },
+      data: {
+        startDate: targetStartDate,
+        nextDueDate: targetNextDueDate,
+        notes: appendNote(target.notes, targetNote),
+      },
+    });
+
+    await tx.costPositionVersion.create({
+      data: {
+        costPositionId: target.id,
+        validFrom: mergedAt,
+        amountCents: updatedTarget.amountCents,
+        recurrenceType: updatedTarget.recurrenceType,
+        recurrenceClass: updatedTarget.recurrenceClass,
+        limitationType: updatedTarget.limitationType,
+        monthlyValueCents: updatedTarget.monthlyValueCents,
+        yearlyValueCents: updatedTarget.yearlyValueCents,
+        notes: `Zusammenführung mit Dublette "${source.title}".`,
+        sourceType: "MANUAL",
+      },
+    });
+
+    await tx.costPosition.delete({ where: { id: source.id } });
+
+    return {
+      target: updatedTarget,
+      sourceId: source.id,
+      sourceDeleted: true,
+      moved: {
+        payments: payments.count,
+        documents: documents.count,
+        importSuggestions: importSuggestions.count,
+        purchaseDocuments: purchaseDocuments.count,
+      },
+    };
+  });
+}
+
+function earlierDate(left: Date | null, right: Date | null) {
+  if (!left) return right;
+  if (!right) return left;
+  return left <= right ? left : right;
+}
+
+function appendNote(current: string | null, note: string) {
+  return [current?.trim(), note].filter(Boolean).join("\n");
 }
 
 function sortOrder(sort: string, direction: "asc" | "desc"): Prisma.CostPositionOrderByWithRelationInput {

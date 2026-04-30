@@ -62,6 +62,8 @@ export const paymentTypeLabels: Record<PaymentType, string> = {
   CORRECTION: "Korrektur",
   REVERSAL: "Storno",
   INCOME: "Einnahme",
+  CASH_WITHDRAWAL: "Bargeldabhebung",
+  TRANSFER: "Umbuchung",
   UNKNOWN: "unklar",
 };
 

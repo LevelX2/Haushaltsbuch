@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, ChevronDown, ChevronRight, Plus, Save, Search, X } from "lucide-react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { CheckCircle2, ChevronDown, ChevronRight, Link2, Plus, Save, Search, X } from "lucide-react";
 import { api } from "@/lib/api-client";
 import {
   confidenceStatusLabels,
@@ -55,6 +55,50 @@ type CostPosition = {
   updatedAt: string;
 };
 
+type CostPositionDetail = CostPosition & {
+  payments: Array<{
+    id: string;
+    date: string;
+    amountCents: number;
+    currency: string;
+    description?: string | null;
+    status: string;
+    provider?: Option | null;
+  }>;
+  purchaseDocuments: Array<{
+    id: string;
+    title: string;
+    source: string;
+    externalProviderName?: string | null;
+    externalDocumentNumber?: string | null;
+    documentDate?: string | null;
+    dueDate?: string | null;
+    amountCents: number;
+    currency: string;
+    status: string;
+    paymentMatches: Array<{ id: string; status: string; score: number; payment: { date: string; amountCents: number; currency: string } }>;
+  }>;
+  documents: Array<{
+    id: string;
+    fileName: string;
+    documentType: string;
+    documentGroup: string;
+    documentDate?: string | null;
+    amountCents?: number | null;
+    currency: string;
+  }>;
+  versions: Array<{
+    id: string;
+    validFrom: string;
+    validTo?: string | null;
+    amountCents: number;
+    recurrenceType: string;
+    monthlyValueCents: number;
+    yearlyValueCents: number;
+    notes?: string | null;
+  }>;
+};
+
 type FormState = {
   title: string;
   providerId: string;
@@ -82,18 +126,27 @@ type Props = {
 
 export function CostPositionWorkspace({ mode = "all" }: Props) {
   const [items, setItems] = useState<CostPosition[]>([]);
+  const [mergeCandidates, setMergeCandidates] = useState<CostPosition[]>([]);
   const [providers, setProviders] = useState<Option[]>([]);
   const [categories, setCategories] = useState<Option[]>([]);
   const [scopes, setScopes] = useState<Option[]>([]);
   const [selected, setSelected] = useState<CostPosition | null>(null);
+  const [selectedDetail, setSelectedDetail] = useState<CostPositionDetail | null>(null);
+  const [showConnections, setShowConnections] = useState(false);
+  const [inlineConnectionsId, setInlineConnectionsId] = useState<string | null>(null);
+  const [inlineConnectionsDetail, setInlineConnectionsDetail] = useState<CostPositionDetail | null>(null);
   const [form, setForm] = useState<FormState>(() => defaultForm(mode));
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ACTIVE");
+  const [recurrenceClassFilter, setRecurrenceClassFilter] = useState(mode === "one-time" ? "ONE_TIME" : mode === "all" ? "RECURRING" : "ALL");
   const [sort, setSort] = useState(mode === "due" ? "nextDueDate" : "monthlyValue");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [mergeTargetId, setMergeTargetId] = useState("");
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   const pageCopy = pageText(mode);
 
@@ -104,20 +157,23 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
       const params = new URLSearchParams();
       if (query.trim()) params.set("q", query.trim());
       if (categoryFilter) params.set("categoryId", categoryFilter);
-      if (mode === "one-time") params.set("recurrenceClass", "ONE_TIME");
+      if (statusFilter) params.set("status", statusFilter);
+      if (recurrenceClassFilter !== "ALL") params.set("recurrenceClass", recurrenceClassFilter);
       if (mode === "limited") params.set("limited", "true");
       if (mode === "due") params.set("due", "true");
       params.set("sort", sort);
       params.set("direction", sort === "nextDueDate" || sort === "title" ? "asc" : "desc");
 
-      const [nextItems, nextProviders, nextCategories, nextScopes] = await Promise.all([
+      const [nextItems, nextMergeCandidates, nextProviders, nextCategories, nextScopes] = await Promise.all([
         api<CostPosition[]>(`/api/cost-positions?${params}`),
+        api<CostPosition[]>("/api/cost-positions?sort=title&direction=asc"),
         api<Option[]>("/api/providers"),
         api<Option[]>("/api/categories"),
         api<Option[]>("/api/household-scopes"),
       ]);
 
       setItems(nextItems);
+      setMergeCandidates(nextMergeCandidates);
       setProviders(nextProviders);
       setCategories(nextCategories);
       setScopes(nextScopes);
@@ -131,7 +187,7 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, sort, categoryFilter]);
+  }, [mode, sort, categoryFilter, statusFilter, recurrenceClassFilter]);
 
   const totals = useMemo(
     () => ({
@@ -142,8 +198,10 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
     [items],
   );
 
-  function edit(item: CostPosition) {
+  async function edit(item: CostPosition) {
     setSelected(item);
+    setSelectedDetail(null);
+    setShowConnections(false);
     setIsFormOpen(true);
     setForm({
       title: item.title,
@@ -165,14 +223,19 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
       confidenceStatus: item.confidenceStatus,
       notes: item.notes ?? "",
     });
+    setMergeTargetId("");
+    window.setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
   }
 
   function reset() {
     setSelected(null);
+    setSelectedDetail(null);
+    setShowConnections(false);
     setForm(defaultForm(mode));
     setMessage(null);
     setError(null);
     setIsFormOpen(false);
+    setMergeTargetId("");
   }
 
   function createNew() {
@@ -227,6 +290,56 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
       setMessage("Kostenposition beendet.");
       reset();
       await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async function mergeSelected() {
+    if (!selected || !mergeTargetId) return;
+    try {
+      const result = await api<{ moved: { payments: number; documents: number; importSuggestions: number; purchaseDocuments: number } }>(
+        `/api/cost-positions/${selected.id}/merge`,
+        {
+          method: "POST",
+          body: JSON.stringify({ targetCostPositionId: mergeTargetId }),
+        },
+      );
+      setMessage(
+        `Kostenposition zusammengeführt. Verschoben: ${result.moved.payments} Zahlung(en), ${result.moved.documents} Dokument(e), ${result.moved.purchaseDocuments} Ausgabenbeleg(e).`,
+      );
+      reset();
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async function toggleConnections() {
+    if (!selected) return;
+    if (showConnections) {
+      setShowConnections(false);
+      return;
+    }
+    setShowConnections(true);
+    if (selectedDetail) return;
+    try {
+      setSelectedDetail(await api<CostPositionDetail>(`/api/cost-positions/${selected.id}`));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async function toggleInlineConnections(item: CostPosition) {
+    if (inlineConnectionsId === item.id) {
+      setInlineConnectionsId(null);
+      setInlineConnectionsDetail(null);
+      return;
+    }
+    setInlineConnectionsId(item.id);
+    setInlineConnectionsDetail(null);
+    try {
+      setInlineConnectionsDetail(await api<CostPositionDetail>(`/api/cost-positions/${item.id}`));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -307,6 +420,28 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
                 </select>
               </div>
               <div className="field">
+                <label htmlFor="statusFilter">Status</label>
+                <select id="statusFilter" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                  <option value="ACTIVE">Aktiv</option>
+                  <option value="INACTIVE">Inaktiv</option>
+                  <option value="ENDED">Beendet / ersetzt</option>
+                  <option value="ALL">Alle</option>
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="recurrenceClassFilter">Wiederkehr</label>
+                <select
+                  id="recurrenceClassFilter"
+                  value={recurrenceClassFilter}
+                  onChange={(event) => setRecurrenceClassFilter(event.target.value)}
+                >
+                  <option value="RECURRING">Wiederkehrend</option>
+                  <option value="ONE_TIME">Einmalig</option>
+                  <option value="UNCLEAR">Unklar</option>
+                  <option value="ALL">Alle</option>
+                </select>
+              </div>
+              <div className="field">
                 <label htmlFor="sort">Sortierung</label>
                 <select id="sort" value={sort} onChange={(event) => setSort(event.target.value)}>
                   <option value="monthlyValue">Monatswert absteigend</option>
@@ -321,12 +456,16 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
               <button className="button" type="button" onClick={load} title="Suchen">
                 <Search size={17} /> Suchen
               </button>
-              {categoryFilter ? (
+              {categoryFilter || statusFilter !== "ACTIVE" || recurrenceClassFilter !== (mode === "one-time" ? "ONE_TIME" : mode === "all" ? "RECURRING" : "ALL") ? (
                 <button
                   className="button secondary"
                   type="button"
-                  onClick={() => setCategoryFilter("")}
-                  title="Kategoriefilter zurücksetzen"
+                  onClick={() => {
+                    setCategoryFilter("");
+                    setStatusFilter("ACTIVE");
+                    setRecurrenceClassFilter(mode === "one-time" ? "ONE_TIME" : mode === "all" ? "RECURRING" : "ALL");
+                  }}
+                  title="Filter zurücksetzen"
                 >
                   <X size={17} /> Filter löschen
                 </button>
@@ -346,35 +485,55 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
                   <th>Jahr</th>
                   <th>Fälligkeit</th>
                   <th>Status</th>
+                  <th>Aktion</th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item) => (
-                  <tr className="row-clickable" key={item.id} onClick={() => edit(item)}>
-                    <td>
-                      <strong>{item.title}</strong>
-                      <div className="small">
-                        {recurrenceClassLabels[item.recurrenceClass as keyof typeof recurrenceClassLabels]} ·{" "}
-                        {limitationTypeLabels[item.limitationType as keyof typeof limitationTypeLabels]}
-                      </div>
-                    </td>
-                    <td>{item.provider?.name ?? "-"}</td>
-                    <td>{item.category?.name ?? "Unklar"}</td>
-                    <td>{formatMoney(item.amountCents, item.currency)}</td>
-                    <td>{formatMoney(item.monthlyValueCents, item.currency)}</td>
-                    <td>{formatMoney(item.yearlyValueCents, item.currency)}</td>
-                    <td>{formatDate(item.nextDueDate)}</td>
-                    <td>
-                      <StatusBadge tone={badgeTone(item.confidenceStatus)}>
-                        {confidenceStatusLabels[item.confidenceStatus as keyof typeof confidenceStatusLabels] ??
-                          item.confidenceStatus}
-                      </StatusBadge>
-                    </td>
-                  </tr>
+                  <Fragment key={item.id}>
+                    <tr>
+                      <td>
+                        <strong>{item.title}</strong>
+                        <div className="small">
+                          {recurrenceClassLabels[item.recurrenceClass as keyof typeof recurrenceClassLabels]} ·{" "}
+                          {limitationTypeLabels[item.limitationType as keyof typeof limitationTypeLabels]}
+                        </div>
+                      </td>
+                      <td>{item.provider?.name ?? "-"}</td>
+                      <td>{item.category?.name ?? "Unklar"}</td>
+                      <td>{formatMoney(item.amountCents, item.currency)}</td>
+                      <td>{formatMoney(item.monthlyValueCents, item.currency)}</td>
+                      <td>{formatMoney(item.yearlyValueCents, item.currency)}</td>
+                      <td>{formatDate(item.nextDueDate)}</td>
+                      <td>
+                        <StatusBadge tone={badgeTone(item.confidenceStatus)}>
+                          {confidenceStatusLabels[item.confidenceStatus as keyof typeof confidenceStatusLabels] ??
+                            item.confidenceStatus}
+                        </StatusBadge>
+                      </td>
+                      <td>
+                        <div className="toolbar">
+                          <button className="button secondary" type="button" onClick={() => void edit(item)}>
+                            Bearbeiten
+                          </button>
+                          <button className="button secondary" type="button" onClick={() => void toggleInlineConnections(item)}>
+                            <Link2 size={16} /> {inlineConnectionsId === item.id ? "Ausblenden" : "Verknüpfungen"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {inlineConnectionsId === item.id ? (
+                      <tr>
+                        <td colSpan={9}>
+                          <CostPositionConnections detail={inlineConnectionsDetail} />
+                        </td>
+                      </tr>
+                    ) : null}
+                  </Fragment>
                 ))}
                 {!items.length ? (
                   <tr>
-                    <td colSpan={8}>{loading ? "Lade Daten ..." : "Keine passenden Positionen vorhanden."}</td>
+                    <td colSpan={9}>{loading ? "Lade Daten ..." : "Keine passenden Positionen vorhanden."}</td>
                   </tr>
                 ) : null}
               </tbody>
@@ -382,7 +541,7 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
           </div>
         </div>
 
-        <form className="panel collapsible-panel" onSubmit={submit}>
+        <form className="panel collapsible-panel" onSubmit={submit} ref={formRef}>
           <button
             className="panel-toggle"
             type="button"
@@ -615,11 +774,146 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
               <button className="button secondary" type="button" onClick={reset} title="Formular leeren">
                 <X size={17} /> Zurücksetzen
               </button>
+              {selected ? (
+                <button className="button secondary" type="button" onClick={toggleConnections} title="Verknüpfungen anzeigen">
+                  <Link2 size={17} /> {showConnections ? "Verknüpfungen ausblenden" : "Verknüpfungen anzeigen"}
+                </button>
+              ) : null}
             </div>
+            {selected && showConnections ? <CostPositionConnections detail={selectedDetail} /> : null}
+            {selected ? (
+              <div className="panel subtle-panel" style={{ marginTop: 18 }}>
+                <h3 className="panel-title">Kostenposition zusammenführen</h3>
+                <div className="toolbar-panel">
+                  <label className="toolbar-field" htmlFor="mergeTarget">
+                    <span className="field-label">Ziel-Kostenposition</span>
+                    <select id="mergeTarget" value={mergeTargetId} onChange={(event) => setMergeTargetId(event.target.value)}>
+                      <option value="">Ziel auswählen</option>
+                      {mergeCandidates
+                        .filter(
+                          (item) =>
+                            item.id !== selected.id &&
+                            ["ACTIVE", "ENDED"].includes(item.status) &&
+                            !["IGNORED", "OBSOLETE", "REPLACED"].includes(item.confidenceStatus),
+                        )
+                        .map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.title} · {item.provider?.name ?? "-"} · {formatMoney(item.amountCents, item.currency)}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                  <button className="button secondary" disabled={!mergeTargetId} onClick={mergeSelected} type="button">
+                    Zusammenführen
+                  </button>
+                  <span className="toolbar-note">
+                    Hängt Zahlungen, Dokumente und Ausgabenbelege um und löscht diese Dublette danach.
+                  </span>
+                </div>
+              </div>
+            ) : null}
           </>
           ) : null}
         </form>
       </section>
+    </div>
+  );
+}
+
+function CostPositionConnections({ detail }: { detail: CostPositionDetail | null }) {
+  if (!detail) {
+    return (
+      <div className="panel subtle-panel" style={{ marginTop: 18 }}>
+        <h3 className="panel-title">Verknüpfungen</h3>
+        <div className="small">Lade Verknüpfungen ...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="panel subtle-panel" style={{ marginTop: 18 }}>
+      <h3 className="panel-title">Verknüpfungen</h3>
+      <div className="connection-grid">
+        <ConnectionList title={`Ausgabenbelege (${detail.purchaseDocuments.length})`}>
+          {detail.purchaseDocuments.length ? (
+            detail.purchaseDocuments.map((document) => (
+              <li key={document.id}>
+                <strong>{document.title}</strong>
+                <div className="small">
+                  {document.externalProviderName ?? document.source} · {formatDate(document.documentDate ?? document.dueDate)} ·{" "}
+                  {formatMoney(document.amountCents, document.currency)}
+                </div>
+                <div className="small">
+                  {document.externalDocumentNumber ?? "ohne Belegnummer"} · {document.status}
+                  {document.paymentMatches.length ? ` · ${document.paymentMatches.length} Zahlungsabgleich(e)` : ""}
+                </div>
+              </li>
+            ))
+          ) : (
+            <li className="small">Keine Ausgabenbelege verknüpft.</li>
+          )}
+        </ConnectionList>
+
+        <ConnectionList title={`Zahlungen (${detail.payments.length})`}>
+          {detail.payments.length ? (
+            detail.payments.map((payment) => (
+              <li key={payment.id}>
+                <strong>{formatMoney(payment.amountCents, payment.currency)}</strong>
+                <div className="small">
+                  {formatDate(payment.date)} · {payment.provider?.name ?? "-"} · {payment.status}
+                </div>
+                <div className="small">{payment.description ?? "ohne Beschreibung"}</div>
+              </li>
+            ))
+          ) : (
+            <li className="small">Keine Zahlungen verknüpft.</li>
+          )}
+        </ConnectionList>
+
+        <ConnectionList title={`Dokumente (${detail.documents.length})`}>
+          {detail.documents.length ? (
+            detail.documents.map((document) => (
+              <li key={document.id}>
+                <strong>{document.fileName}</strong>
+                <div className="small">
+                  {document.documentType} · {document.documentGroup} · {formatDate(document.documentDate)}
+                  {document.amountCents !== null && document.amountCents !== undefined
+                    ? ` · ${formatMoney(document.amountCents, document.currency)}`
+                    : ""}
+                </div>
+              </li>
+            ))
+          ) : (
+            <li className="small">Keine Dokumente verknüpft.</li>
+          )}
+        </ConnectionList>
+
+        <ConnectionList title={`Historie (${detail.versions.length})`}>
+          {detail.versions.length ? (
+            detail.versions.map((version) => (
+              <li key={version.id}>
+                <strong>{formatDate(version.validFrom)}</strong>
+                <div className="small">
+                  {formatMoney(version.amountCents)} · {recurrenceTypeLabels[version.recurrenceType as keyof typeof recurrenceTypeLabels] ?? version.recurrenceType} · Monat{" "}
+                  {formatMoney(version.monthlyValueCents)} · Jahr {formatMoney(version.yearlyValueCents)}
+                </div>
+                {version.notes ? <div className="small">{version.notes}</div> : null}
+              </li>
+            ))
+          ) : (
+            <li className="small">Keine Historie vorhanden.</li>
+          )}
+        </ConnectionList>
+      </div>
+    </div>
+  );
+}
+
+function ConnectionList({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h4 className="field-label">{title}</h4>
+      <ul className="connection-list">{children}</ul>
     </div>
   );
 }

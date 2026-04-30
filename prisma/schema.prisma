@@ -67,6 +67,8 @@ enum PaymentType {
   CORRECTION
   REVERSAL
   INCOME
+  CASH_WITHDRAWAL
+  TRANSFER
   UNKNOWN
 }
 
@@ -134,6 +136,7 @@ model CostPosition {
   documents            Document[]
   importSuggestions    ImportSuggestion[]
   versions             CostPositionVersion[]
+  purchaseDocuments    PurchaseDocument[]
 
   @@index([status])
   @@index([recurrenceClass])
@@ -182,6 +185,7 @@ model Payment {
   sourceDocument   Document?        @relation("PaymentSourceDocument", fields: [sourceDocumentId], references: [id])
   linkedDocuments  Document[]       @relation("DocumentLinkedPayment")
   importSuggestions ImportSuggestion[]
+  paymentMatches    PaymentMatch[]
 
   @@index([date])
   @@index([paymentType])
@@ -200,6 +204,7 @@ model Provider {
   costPositions  CostPosition[]
   payments       Payment[]
   documents      Document[]
+  purchaseDocuments PurchaseDocument[]
 
   @@index([name])
 }
@@ -214,6 +219,8 @@ model Category {
   parent           Category?       @relation("CategoryChildren", fields: [parentCategoryId], references: [id])
   children         Category[]      @relation("CategoryChildren")
   costPositions    CostPosition[]
+  purchaseDocuments PurchaseDocument[]
+  purchaseItems     PurchaseItem[]
 
   @@unique([name, parentCategoryId])
   @@index([active, sortOrder])
@@ -225,7 +232,8 @@ model HouseholdScope {
   active        Boolean        @default(true)
   sortOrder     Int            @default(0)
 
-  costPositions CostPosition[]
+  costPositions      CostPosition[]
+  purchaseDocuments  PurchaseDocument[]
 }
 
 model Document {
@@ -252,6 +260,7 @@ model Document {
   linkedPayment        Payment?        @relation("DocumentLinkedPayment", fields: [linkedPaymentId], references: [id])
   sourcedPayments      Payment[]       @relation("PaymentSourceDocument")
   importSuggestions    ImportSuggestion[]
+  purchaseDocuments    PurchaseDocument[]
 
   @@index([fileHash])
   @@index([importStatus])
@@ -278,6 +287,85 @@ model ImportSuggestion {
 
   @@index([status])
   @@index([suggestionType])
+}
+
+model PurchaseDocument {
+  id                     String           @id @default(cuid())
+  source                 String
+  externalProviderName   String?
+  externalDocumentNumber String?
+  title                  String
+  documentDate           DateTime?
+  dueDate                DateTime?
+  amountCents            Int              @default(0)
+  currency               String           @default("EUR")
+  status                 String           @default("NEEDS_REVIEW")
+  recurrenceCandidate    String           @default("UNCLEAR")
+  confidenceStatus       ConfidenceStatus @default(NEEDS_REVIEW)
+  providerId             String?
+  categoryId             String?
+  householdScopeId       String?
+  linkedCostPositionId   String?
+  sourceDocumentId       String?
+  rawJson                String?
+  notes                  String?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+
+  provider               Provider?        @relation(fields: [providerId], references: [id])
+  category               Category?        @relation(fields: [categoryId], references: [id])
+  householdScope         HouseholdScope?  @relation(fields: [householdScopeId], references: [id])
+  linkedCostPosition     CostPosition?    @relation(fields: [linkedCostPositionId], references: [id])
+  sourceDocument         Document?        @relation(fields: [sourceDocumentId], references: [id])
+  items                  PurchaseItem[]
+  paymentMatches         PaymentMatch[]
+
+  @@unique([source, externalDocumentNumber])
+  @@index([source])
+  @@index([documentDate])
+  @@index([dueDate])
+  @@index([status])
+  @@index([confidenceStatus])
+}
+
+model PurchaseItem {
+  id                  String           @id @default(cuid())
+  purchaseDocumentId  String
+  title               String
+  quantity            Float?
+  amountCents         Int?
+  currency            String           @default("EUR")
+  categoryId          String?
+  recurrenceCandidate String           @default("UNCLEAR")
+  rawJson             String?
+  createdAt           DateTime         @default(now())
+
+  purchaseDocument    PurchaseDocument @relation(fields: [purchaseDocumentId], references: [id], onDelete: Cascade)
+  category            Category?        @relation(fields: [categoryId], references: [id])
+
+  @@index([purchaseDocumentId])
+  @@index([categoryId])
+}
+
+model PaymentMatch {
+  id                  String           @id @default(cuid())
+  purchaseDocumentId  String
+  paymentId           String
+  status              String           @default("PROPOSED")
+  score               Float            @default(0)
+  reason              String?
+  amountDeltaCents    Int?
+  dateDeltaDays       Int?
+  notes               String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  purchaseDocument    PurchaseDocument @relation(fields: [purchaseDocumentId], references: [id], onDelete: Cascade)
+  payment             Payment          @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@unique([purchaseDocumentId, paymentId])
+  @@index([status])
+  @@index([score])
 }
 
 model ReportRun {

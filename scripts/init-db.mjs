@@ -13,6 +13,7 @@ fs.mkdirSync(path.dirname(databasePath), { recursive: true });
 const db = new DatabaseSync(databasePath);
 db.exec("PRAGMA foreign_keys = ON;");
 db.exec(schemaSql());
+applyLightweightMigrations(db);
 db.close();
 
 console.log(`SQLite-Schema bereit: ${databasePath}`);
@@ -35,6 +36,19 @@ function databasePathFromUrl(url) {
   }
 
   return path.resolve(process.cwd(), "prisma", withoutPrefix);
+}
+
+function applyLightweightMigrations(db) {
+  addColumnIfMissing(db, "PurchaseDocument", "dueDate", "DATETIME");
+  addColumnIfMissing(db, "PurchaseDocument", "linkedCostPositionId", "TEXT");
+  db.exec('CREATE INDEX IF NOT EXISTS "PurchaseDocument_dueDate_idx" ON "PurchaseDocument"("dueDate");');
+}
+
+function addColumnIfMissing(db, tableName, columnName, definition) {
+  const columns = db.prepare(`PRAGMA table_info("${tableName}")`).all();
+  if (!columns.some((column) => column.name === columnName)) {
+    db.exec(`ALTER TABLE "${tableName}" ADD COLUMN "${columnName}" ${definition};`);
+  }
 }
 
 function schemaSql() {
@@ -190,6 +204,76 @@ CREATE TABLE IF NOT EXISTS "ImportSuggestion" (
 );
 CREATE INDEX IF NOT EXISTS "ImportSuggestion_status_idx" ON "ImportSuggestion"("status");
 CREATE INDEX IF NOT EXISTS "ImportSuggestion_suggestionType_idx" ON "ImportSuggestion"("suggestionType");
+
+CREATE TABLE IF NOT EXISTS "PurchaseDocument" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "source" TEXT NOT NULL,
+  "externalProviderName" TEXT,
+  "externalDocumentNumber" TEXT,
+  "title" TEXT NOT NULL,
+  "documentDate" DATETIME,
+  "dueDate" DATETIME,
+  "amountCents" INTEGER NOT NULL DEFAULT 0,
+  "currency" TEXT NOT NULL DEFAULT 'EUR',
+  "status" TEXT NOT NULL DEFAULT 'NEEDS_REVIEW',
+  "recurrenceCandidate" TEXT NOT NULL DEFAULT 'UNCLEAR',
+  "confidenceStatus" TEXT NOT NULL DEFAULT 'NEEDS_REVIEW',
+  "providerId" TEXT,
+  "categoryId" TEXT,
+  "householdScopeId" TEXT,
+  "linkedCostPositionId" TEXT,
+  "sourceDocumentId" TEXT,
+  "rawJson" TEXT,
+  "notes" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "PurchaseDocument_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "Provider" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT "PurchaseDocument_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT "PurchaseDocument_householdScopeId_fkey" FOREIGN KEY ("householdScopeId") REFERENCES "HouseholdScope" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT "PurchaseDocument_linkedCostPositionId_fkey" FOREIGN KEY ("linkedCostPositionId") REFERENCES "CostPosition" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT "PurchaseDocument_sourceDocumentId_fkey" FOREIGN KEY ("sourceDocumentId") REFERENCES "Document" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "PurchaseDocument_source_externalDocumentNumber_key" ON "PurchaseDocument"("source", "externalDocumentNumber");
+CREATE INDEX IF NOT EXISTS "PurchaseDocument_source_idx" ON "PurchaseDocument"("source");
+CREATE INDEX IF NOT EXISTS "PurchaseDocument_documentDate_idx" ON "PurchaseDocument"("documentDate");
+CREATE INDEX IF NOT EXISTS "PurchaseDocument_status_idx" ON "PurchaseDocument"("status");
+CREATE INDEX IF NOT EXISTS "PurchaseDocument_confidenceStatus_idx" ON "PurchaseDocument"("confidenceStatus");
+
+CREATE TABLE IF NOT EXISTS "PurchaseItem" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "purchaseDocumentId" TEXT NOT NULL,
+  "title" TEXT NOT NULL,
+  "quantity" REAL,
+  "amountCents" INTEGER,
+  "currency" TEXT NOT NULL DEFAULT 'EUR',
+  "categoryId" TEXT,
+  "recurrenceCandidate" TEXT NOT NULL DEFAULT 'UNCLEAR',
+  "rawJson" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "PurchaseItem_purchaseDocumentId_fkey" FOREIGN KEY ("purchaseDocumentId") REFERENCES "PurchaseDocument" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT "PurchaseItem_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+CREATE INDEX IF NOT EXISTS "PurchaseItem_purchaseDocumentId_idx" ON "PurchaseItem"("purchaseDocumentId");
+CREATE INDEX IF NOT EXISTS "PurchaseItem_categoryId_idx" ON "PurchaseItem"("categoryId");
+
+CREATE TABLE IF NOT EXISTS "PaymentMatch" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "purchaseDocumentId" TEXT NOT NULL,
+  "paymentId" TEXT NOT NULL,
+  "status" TEXT NOT NULL DEFAULT 'PROPOSED',
+  "score" REAL NOT NULL DEFAULT 0,
+  "reason" TEXT,
+  "amountDeltaCents" INTEGER,
+  "dateDeltaDays" INTEGER,
+  "notes" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "PaymentMatch_purchaseDocumentId_fkey" FOREIGN KEY ("purchaseDocumentId") REFERENCES "PurchaseDocument" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT "PaymentMatch_paymentId_fkey" FOREIGN KEY ("paymentId") REFERENCES "Payment" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "PaymentMatch_purchaseDocumentId_paymentId_key" ON "PaymentMatch"("purchaseDocumentId", "paymentId");
+CREATE INDEX IF NOT EXISTS "PaymentMatch_status_idx" ON "PaymentMatch"("status");
+CREATE INDEX IF NOT EXISTS "PaymentMatch_score_idx" ON "PaymentMatch"("score");
 
 CREATE TABLE IF NOT EXISTS "ReportRun" (
   "id" TEXT NOT NULL PRIMARY KEY,

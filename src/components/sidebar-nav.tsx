@@ -34,6 +34,7 @@ const groups = [
     label: "Erfassung",
     items: [
       { href: "/einmalige-ausgaben", label: "Einmalige Ausgaben", icon: ReceiptText },
+      { href: "/ausgabenbelege", label: "Ausgabenbelege", icon: FileText },
       { href: "/befristete-kosten", label: "Befristete Kosten", icon: ListChecks },
       { href: "/zahlungen", label: "Zahlungen", icon: Landmark },
       { href: "/pruefeingang", label: "Prüfeingang", icon: Inbox },

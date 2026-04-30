@@ -23,6 +23,7 @@ type DashboardData = {
   byCategory: { category: string; monthlyValueCents: number; yearlyValueCents: number }[];
   dueItems: ForecastRow[];
   oneTimeCosts: CostRow[];
+  recentExpenses: ExpenseMonthRow[];
   lastReport?: { generatedAt: string; filePath: string } | null;
   lastBackup?: { generatedAt: string; filePath: string } | null;
 };
@@ -56,6 +57,14 @@ type ForecastMonthGroup = {
   label: string;
   paymentCount: number;
   totalCents: number;
+  currency: string;
+};
+
+type ExpenseMonthRow = {
+  key: string;
+  month: string;
+  totalCents: number;
+  paymentCount: number;
   currency: string;
 };
 
@@ -125,27 +134,27 @@ export function DashboardView() {
         </div>
       </section>
 
-      <section className="split-grid">
-        <div className="panel">
-          <h2 className="panel-title">Kosten nach Kategorie</h2>
-          {data?.byCategory.length ? (
-            data.byCategory.map((row) => (
-              <div className="bar-row" key={row.category}>
-                <strong>{row.category}</strong>
-                <div className="bar-track" aria-hidden="true">
-                  <div
-                    className="bar-fill"
-                    style={{ width: `${Math.max(4, (row.monthlyValueCents / maxCategory) * 100)}%` }}
-                  />
-                </div>
-                <span>{formatMoney(row.monthlyValueCents)}</span>
+      <section className="panel">
+        <h2 className="panel-title">Kosten nach Kategorie (hochgerechnete Monatswerte)</h2>
+        {data?.byCategory.length ? (
+          data.byCategory.map((row) => (
+            <div className="bar-row" key={row.category}>
+              <strong>{row.category}</strong>
+              <div className="bar-track" aria-hidden="true">
+                <div
+                  className="bar-fill"
+                  style={{ width: `${Math.max(4, (row.monthlyValueCents / maxCategory) * 100)}%` }}
+                />
               </div>
-            ))
-          ) : (
-            <div className="empty">{loading ? "Lade Daten ..." : "Noch keine geprüften Fixkosten vorhanden."}</div>
-          )}
-        </div>
+              <span>{formatMoney(row.monthlyValueCents)}</span>
+            </div>
+          ))
+        ) : (
+          <div className="empty">{loading ? "Lade Daten ..." : "Noch keine geprüften Fixkosten vorhanden."}</div>
+        )}
+      </section>
 
+      <section className="split-grid">
         <div className="panel">
           <h2 className="panel-title">Betrieb</h2>
           <div className="grid">
@@ -164,6 +173,24 @@ export function DashboardView() {
               <strong>{data?.totals.oneTimeCurrentYearCount ?? 0}</strong>{" "}
               <span>{formatMoney(data?.totals.oneTimeCurrentYearCents ?? 0)}</span>
             </div>
+          </div>
+        </div>
+
+        <div className="panel">
+          <h2 className="panel-title">Ausgaben der letzten 3 Monate (Ist)</h2>
+          <div className="grid">
+            {(data?.recentExpenses ?? []).map((month) => (
+              <div className="expense-month-row" key={month.key}>
+                <div>
+                  <strong>{formatMonth(new Date(month.month))}</strong>
+                  <div className="small">{month.paymentCount} Zahlungen</div>
+                </div>
+                <span>{formatMoney(month.totalCents, month.currency)}</span>
+              </div>
+            ))}
+            {!data?.recentExpenses.length ? (
+              <div className="empty">{loading ? "Lade Daten ..." : "Noch keine gebuchten Ausgaben vorhanden."}</div>
+            ) : null}
           </div>
         </div>
       </section>

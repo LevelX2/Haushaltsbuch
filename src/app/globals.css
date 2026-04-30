@@ -193,9 +193,38 @@ button {
   padding: 18px;
 }
 
+.subtle-panel {
+  background: #f8fbfa;
+  box-shadow: none;
+}
+
 .panel-title {
   margin: 0 0 14px;
   font-size: 18px;
+}
+
+.connection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.connection-list {
+  display: grid;
+  gap: 10px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.connection-list li {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.connection-list li:first-child {
+  border-top: 0;
+  padding-top: 0;
 }
 
 .panel-toggle {
@@ -402,6 +431,24 @@ tr.row-clickable:hover {
   background: #f8fbfa;
 }
 
+.money {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.money.positive {
+  color: var(--ok);
+}
+
+.money.negative {
+  color: var(--danger);
+}
+
+.money.neutral {
+  color: var(--muted);
+}
+
 .month-summary-row td {
   border-top: 2px solid #b8cac5;
   background: #eef3f2;
@@ -568,6 +615,24 @@ textarea:focus {
   background: var(--accent);
 }
 
+.expense-month-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid var(--line);
+  padding: 8px 0;
+}
+
+.expense-month-row:last-child {
+  border-bottom: 0;
+}
+
+.expense-month-row > span {
+  white-space: nowrap;
+  font-weight: 800;
+}
+
 .compact-summary {
   padding: 14px 16px;
 }
@@ -613,6 +678,10 @@ textarea:focus {
 
 .toolbar-field {
   min-width: 180px;
+}
+
+.toolbar-field.search-field {
+  min-width: min(100%, 360px);
 }
 
 .field-label {

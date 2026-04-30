@@ -11,7 +11,7 @@ Zentrale Leitregel: Jeder Input wird gespeichert oder im Prüfeingang gehalten, 
 - `Prisma Client` ist das ORM für den Datenzugriff.
 - `SQLite` liegt lokal im AppData-Ordner, nicht in OneDrive.
 - `node:sqlite` initialisiert das lokale Schema idempotent, weil die Prisma-Migrate-Engine in dieser Node-24-Umgebung ohne Detailfehler aussteigt.
-- Reports werden serverseitig als PDF und XLSX erzeugt.
+- Reports werden serverseitig als PDF und XLSX erzeugt. Vor jedem neuen Reportlauf werden vorhandene PDF-/XLSX-Reports im Report-Stammordner nach `Archiv` verschoben, damit dort nur der aktuellste Lauf direkt sichtbar bleibt.
 - Backups kopieren die SQLite-Datei und erzeugen zusätzlich einen JSON-Gesamtexport.
 
 ## Laufzeitpfade
@@ -29,6 +29,7 @@ Standard OneDrive:
 ```text
 C:\Users\<Benutzer>\OneDrive\Haushaltsbuch
 ├─ Reports
+│  └─ Archiv
 ├─ Import
 ├─ Backup
 ├─ Export
@@ -53,6 +54,7 @@ Die Pfade werden in `AppSetting` gespeichert und sind über die Seite `Einstellu
 │  │  ├─ api/
 │  │  ├─ kostenpositionen/
 │  │  ├─ einmalige-ausgaben/
+│  │  ├─ ausgabenbelege/
 │  │  ├─ befristete-kosten/
 │  │  ├─ faelligkeiten/
 │  │  ├─ zahlungen/
@@ -79,7 +81,10 @@ Die technische Quelle ist `prisma/schema.prisma`. Geldbeträge werden in Cent ge
 Wichtige Tabellen:
 - `CostPosition`: Kostenposition mit Betrag, Wiederkehr, Befristung, Status, Prüfstatus, Monatswert und Jahreswert.
 - `CostPositionVersion`: vorbereitete Historie für spätere Werte mit Gültigkeitszeitraum.
-- `Payment`: konkrete oder erwartete Zahlung, optional mit Kostenposition, Anbieter und Quelldokument verknüpft.
+- `Payment`: tatsächliche Zahlungsbewegung aus Bank, Karte, PayPal, Barzahlung oder vergleichbaren Zahlungswegen, optional mit Kostenposition, Anbieter und Quelldokument verknüpft.
+- `PurchaseDocument`: normalisierter Ausgabenbeleg aus Shop-, E-Mail-, PDF- oder manuellen Quellen.
+- `PurchaseItem`: Positionen eines Ausgabenbelegs.
+- `PaymentMatch`: Abgleichsvorschlag oder bestätigte Zuordnung zwischen Ausgabenbeleg und Zahlung.
 - `Provider`: Anbieter/Zahlungsempfänger mit normalisiertem Namen und Aliasliste.
 - `Category`: pflegbare Kategorien.
 - `HouseholdScope`: optionaler Haushaltsbezug.
@@ -114,6 +119,9 @@ Alle Endpunkte liegen unter `src/app/api`.
 | `GET`/`PATCH` | `/api/cost-positions/[id]` | Detail laden und ändern |
 | `GET`/`POST` | `/api/payments` | Zahlungen listen und erfassen |
 | `PATCH` | `/api/payments/[id]` | Zahlung ändern |
+| `POST` | `/api/payments/import/camt-directory` | CAMT-ZIP-Dateien aus einem lokalen Bankordner als Zahlungen importieren |
+| `GET` | `/api/purchase-documents` | Ausgabenbelege listen |
+| `POST` | `/api/purchase-documents/import/amazon-text` | Kopierten Amazon-Bestellseitentext als Ausgabenbelege importieren |
 | `GET`/`POST` | `/api/providers` | Anbieter listen und anlegen |
 | `PATCH` | `/api/providers/[id]` | Anbieter ändern |
 | `GET`/`POST` | `/api/categories` | Kategorien listen und anlegen |
@@ -132,9 +140,10 @@ Die UI ist ein arbeitsorientiertes Web-Fachsystem:
 - `Dashboard`: wichtigste Zahlen, größte Kostenpositionen, Kategorien, Fälligkeiten und Betriebsstand.
 - `Kostenpositionen`: zentrale Liste mit Suche, Sortierung und Erfassungs-/Bearbeitungsformular.
 - `Einmalige Ausgaben`: dieselbe Fachkomponente mit Einmalig-Voreinstellung.
+- `Ausgabenbelege`: quellenneutrale Belege aus Bestellungen, Rechnungen und Shop- oder E-Mail-Importen; erster Importpfad für kopierten Amazon-Bestellseitentext.
 - `Befristete Kosten`: dieselbe Fachkomponente mit Befristungsfilter.
 - `Fälligkeiten`: dieselbe Fachkomponente mit Fälligkeitsfokus.
-- `Zahlungen`: Plan/Ist-Zahlungen getrennt von Kostenpositionen.
+- `Zahlungen`: echte Zahlungsbewegungen getrennt von Kostenpositionen und Forderungsbelegen, inklusive lokalem CAMT-ZIP-Import für Bankumsätze.
 - `Anbieter`, `Kategorien`: Stammdatenpflege.
 - `Dokumente / Belege`: Quellenmetadaten.
 - `Prüfeingang`: Importvorschläge und unklare Inputs.

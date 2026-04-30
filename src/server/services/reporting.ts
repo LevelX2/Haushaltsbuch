@@ -19,6 +19,8 @@ type ReportDefinition = {
 };
 
 const effectiveConfidence: ConfidenceStatus[] = ["SAFE", "ESTIMATED", "MANUALLY_CONFIRMED"];
+const reportArchiveDirName = "Archiv";
+const reportFileExtensions = new Set([".pdf", ".xlsx"]);
 
 export async function listReportRuns() {
   return prisma.reportRun.findMany({ orderBy: { generatedAt: "desc" }, take: 100 });
@@ -27,6 +29,7 @@ export async function listReportRuns() {
 export async function generateReports() {
   const reportsDir = await settingValue("reportsDir");
   await fsp.mkdir(reportsDir, { recursive: true });
+  await archiveExistingReports(reportsDir);
 
   const definitions = await reportDefinitions();
   const generated = [];
@@ -62,6 +65,44 @@ export async function generateReports() {
   }
 
   return generated;
+}
+
+async function archiveExistingReports(reportsDir: string) {
+  const archiveDir = path.join(reportsDir, reportArchiveDirName);
+  await fsp.mkdir(archiveDir, { recursive: true });
+
+  const entries = await fsp.readdir(reportsDir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isFile() || !reportFileExtensions.has(path.extname(entry.name).toLowerCase())) {
+      continue;
+    }
+
+    const sourcePath = path.join(reportsDir, entry.name);
+    const targetPath = await unusedArchivePath(archiveDir, entry.name);
+    await fsp.rename(sourcePath, targetPath);
+  }
+}
+
+async function unusedArchivePath(archiveDir: string, fileName: string) {
+  const parsed = path.parse(fileName);
+  let candidate = path.join(archiveDir, fileName);
+  let suffix = 1;
+
+  while (await pathExists(candidate)) {
+    candidate = path.join(archiveDir, `${parsed.name}-${suffix}${parsed.ext}`);
+    suffix += 1;
+  }
+
+  return candidate;
+}
+
+async function pathExists(filePath: string) {
+  try {
+    await fsp.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function reportDefinitions(): Promise<ReportDefinition[]> {

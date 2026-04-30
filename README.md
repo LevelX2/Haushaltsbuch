@@ -7,8 +7,10 @@ Die Anwendung rechnet unterschiedliche Zahlungsrhythmen auf Monats- und Jahreswe
 ## Funktionsumfang
 
 - Kostenpositionen für regelmäßige, einmalige und befristete Ausgaben
-- Zahlungen mit Plan-/Ist-Bezug
+- Zahlungen als tatsächliche Bank-, Karten-, PayPal- oder Barbewegungen
 - Anbieter, Kategorien und Haushaltsbezüge
+- Ausgabenbelege für Bestellungen und Rechnungen mit erstem Amazon-Textimport
+- CAMT-ZIP-Import für lokale Bankumsätze
 - Dokument- und Belegmetadaten ohne Datei-Blob in der Datenbank
 - Prüfeingang für unklare oder vorbereitete Importdaten
 - Dashboard mit Monats- und Jahreswerten
@@ -68,6 +70,8 @@ C:\Users\<Benutzer>\OneDrive\Haushaltsbuch
 ```
 
 Die Pfade sind in der Anwendung unter `Einstellungen` änderbar.
+
+Bei jedem neuen Reportlauf werden vorhandene PDF-/XLSX-Reports aus dem Report-Stammordner zuerst nach `Reports\Archiv` verschoben. Direkt im Reportordner liegt dadurch nur der aktuellste automatisch erzeugte Reportlauf.
 
 ## Git- und Datenschutzhinweise
 
