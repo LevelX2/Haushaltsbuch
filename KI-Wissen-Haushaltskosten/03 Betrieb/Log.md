@@ -253,7 +253,7 @@
   - Treffer werden in `PaymentMatch` mit Status `AUTO_CONFIRMED`, `PROPOSED` oder `AMBIGUOUS` geführt; offene und nicht zahlungsrelevante Fälle werden in der Anzeige abgeleitet.
   - Die Ausgabenbelegliste zeigt den Abgleichstatus mit Betrag, Datum und Score des besten Treffers und kann nach Abgleichstatus, Belegstatus und Wiederkehr-Einschätzung filtern.
   - CAMT-Beträge werden im XML-Punktformat korrekt gelesen; bereits importierte CAMT-Zahlungen können bei Parserkorrekturen aktualisiert statt nur übersprungen werden.
-  - Die lokal importierten CAMT-Zahlungen aus `C:\Users\Lui\OneDrive\Unterlagen\Bank\SPK\2026` wurden nachkorrigiert.
+  - Die lokal importierten CAMT-Zahlungen aus einem lokalen Bankordner wurden nachkorrigiert.
 - Ergebnis des ersten Abgleichlaufs:
   - 95 Ausgabenbelege geprüft.
   - 342 sichtbare Bankzahlungen vorhanden; 341 davon mit Betrag ungleich 0 für Matching berücksichtigt.
@@ -417,4 +417,3 @@
   - `.editorconfig`, `.gitattributes`, `.gitignore` und `README.md` ergänzt.
 - Einordnung:
   - Es wurde bewusst noch keine ausführbare Anwendung und kein technischer App-Scaffold angelegt.
-

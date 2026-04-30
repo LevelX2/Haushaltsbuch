@@ -511,7 +511,6 @@ function extractAmazonItems(lines: string[]) {
   const skip = new Set([
     "Summe",
     "Versandadresse",
-    "Hirth Ludwig",
     "Bestelldetails anzeigen  Rechnung",
     "Nochmals kaufen",
     "Deinen Artikel anzeigen",
@@ -535,6 +534,14 @@ function extractAmazonItems(lines: string[]) {
   let canCollect = false;
 
   for (const line of lines) {
+    if (line === "Versandadresse") {
+      previous = line;
+      continue;
+    }
+    if (previous === "Versandadresse" && /^[\p{L} .'-]{3,}$/u.test(line)) {
+      previous = line;
+      continue;
+    }
     if (/^Bestelldetails anzeigen/.test(line) || /^(Zugestellt:|Zustellung:|Abgeholt am|E-Mail-Zustellung)/.test(line)) {
       canCollect = true;
       continue;
