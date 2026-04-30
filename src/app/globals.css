@@ -159,6 +159,13 @@ button {
   gap: 14px;
 }
 
+.year-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+  gap: 16px;
+  align-items: start;
+}
+
 .stat-card,
 .panel,
 .table-wrap {
@@ -170,6 +177,51 @@ button {
 
 .stat-card {
   padding: 16px;
+}
+
+.fixed-cost-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: end;
+  border: 1px solid #c7d6d2;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+
+.fixed-cost-value {
+  margin-top: 8px;
+  font-size: 38px;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.fixed-cost-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(96px, 1fr));
+  gap: 10px;
+  min-width: min(100%, 360px);
+}
+
+.fixed-cost-facts div {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fbfa;
+  padding: 10px;
+}
+
+.fixed-cost-facts span,
+.amount-stack span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.fixed-cost-facts strong {
+  font-size: 20px;
 }
 
 .stat-label {
@@ -603,6 +655,10 @@ textarea:focus {
   padding: 8px 0;
 }
 
+.category-row {
+  grid-template-columns: minmax(140px, 1fr) 2fr minmax(150px, auto);
+}
+
 .bar-track {
   height: 9px;
   border-radius: 999px;
@@ -613,6 +669,13 @@ textarea:focus {
 .bar-fill {
   height: 100%;
   background: var(--accent);
+}
+
+.amount-stack {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  white-space: nowrap;
 }
 
 .expense-month-row {
@@ -747,8 +810,13 @@ textarea:focus {
   }
 
   .workspace,
+  .year-overview-grid,
   .split-grid,
   .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fixed-cost-card {
     grid-template-columns: 1fr;
   }
 
@@ -772,8 +840,15 @@ textarea:focus {
 
   .review-facts,
   .review-data dl div,
+  .bar-row,
+  .category-row,
+  .fixed-cost-facts,
   .review-actions {
     grid-template-columns: 1fr;
+  }
+
+  .amount-stack {
+    justify-items: start;
   }
 
   .nav-group {

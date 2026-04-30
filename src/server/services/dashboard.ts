@@ -8,7 +8,7 @@ const effectiveConfidence: ConfidenceStatus[] = ["SAFE", "ESTIMATED", "MANUALLY_
 export async function getDashboard() {
   const today = new Date();
   const inSixMonths = addMonths(today, 6);
-  const recentExpenseStart = startOfMonth(subMonths(today, 2));
+  const recentExpenseStart = startOfMonth(subMonths(today, 11));
   const recentExpenseEnd = addMonths(startOfMonth(today), 1);
   const paymentForecast = await getPaymentForecast({ mode: "all-until", forecastUntil: inSixMonths });
   const activeFixedCosts = await prisma.costPosition.findMany({
@@ -53,16 +53,17 @@ export async function getDashboard() {
     orderBy: { date: "asc" },
   });
 
-  const byCategory = new Map<string, { monthlyValueCents: number; yearlyValueCents: number }>();
+  const byCategory = new Map<string, { monthlyValueCents: number; yearlyValueCents: number; positionCount: number }>();
   for (const item of activeFixedCosts) {
     const category = item.category?.name ?? "Unklar";
-    const current = byCategory.get(category) ?? { monthlyValueCents: 0, yearlyValueCents: 0 };
+    const current = byCategory.get(category) ?? { monthlyValueCents: 0, yearlyValueCents: 0, positionCount: 0 };
     current.monthlyValueCents += item.monthlyValueCents;
     current.yearlyValueCents += item.yearlyValueCents;
+    current.positionCount += 1;
     byCategory.set(category, current);
   }
 
-  const recentExpenses = [2, 1, 0].map((offset) => {
+  const recentExpenses = Array.from({ length: 12 }, (_, index) => 11 - index).map((offset) => {
     const date = startOfMonth(subMonths(today, offset));
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
     return { key, month: date.toISOString(), totalCents: 0, paymentCount: 0, currency: "EUR" };
@@ -85,6 +86,7 @@ export async function getDashboard() {
     totals: {
       monthlyFixedCents: activeFixedCosts.reduce((sum, item) => sum + item.monthlyValueCents, 0),
       yearlyFixedCents: activeFixedCosts.reduce((sum, item) => sum + item.yearlyValueCents, 0),
+      fixedCostCount: activeFixedCosts.length,
       activeCount,
       limitedCount,
       oneTimeCurrentYearCount: oneTimeCosts.length,
