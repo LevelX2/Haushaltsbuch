@@ -1,5 +1,91 @@
 # Log
 
+## 2026-05
+
+### [2026-05-01] umsetzung | Dashboard-Auswertung für einmalige Ausgaben nach Zeitraum ergänzt
+- Anlass oder Quelle: Nutzerüberlegung, dass die neu zusammengefassten einmaligen Kostenpositionen im Dashboard nach Monat oder Jahr auswertbar sein sollen und optional zusammen mit wiederkehrenden Ist-Zahlungen eine Gesamtausgaben-Sicht ergeben können.
+- Änderung:
+  - Die Dashboard-API akzeptiert Zeitraumparameter für Jahres- und Monatsansicht sowie einen Schalter zum Einbeziehen wiederkehrender Ist-Zahlungen.
+  - Das Dashboard enthält eine neue Steuerleiste mit Jahr-/Monatsmodus, Jahr-Auswahl, Monatsknöpfen und Option `Wiederkehrende Ist-Zahlungen einbeziehen`.
+  - Ein neues Board `Ausgaben nach Gruppen` zeigt einmalige Ausgaben im gewählten Zeitraum gruppiert nach Sammel-Kostenposition.
+  - Gruppen sind aufklappbar und zeigen die zugrunde liegenden Ausgabenbelege oder, falls keine Ausgabenbelege vorhanden sind, die gebuchten Zahlungen.
+  - Die Gesamtausgaben-Sicht zählt einmalige Ausgaben vorrangig über Ausgabenbelege und wiederkehrende Ausgaben über gebuchte Ist-Zahlungen, um Doppelzählungen zu vermeiden.
+  - `Ausgaben nach Gruppen` steht in der Dashboard-Reihenfolge direkt unter der Zeitsteuerung.
+  - `Fixkosten nach Gruppen` ist ebenfalls zeitraumbezogen: Monatsansichten zeigen den erwarteten Fixkostenblock des gewählten Monats, Jahresansichten die Summe der monatlichen Fixkosten im gewählten Jahr plus Durchschnitt pro Monat.
+  - Die periodische Fixkostenberechnung nutzt Kostenpositions-Versionen, Start- und Enddatum; wenn keine passende Historienversion vorhanden ist, fällt sie auf den aktuellen Kostenpositionswert zurück.
+- Verifikation:
+  - `npm run typecheck` erfolgreich.
+  - `git diff --check` erfolgreich.
+  - Lokale API-Prüfung für `April 2026` erfolgreich: einmalige Ausgaben `2.125,37 EUR`, mit wiederkehrenden Ist-Zahlungen `2.983,16 EUR`.
+  - Lokale API-Prüfung der Fixkosten-Zeitleiste erfolgreich: Januar 2026 `1.190,50 EUR`, April 2026 `1.549,83 EUR`.
+  - Lokaler Aufruf von `/` erfolgreich mit HTTP 200.
+
+### [2026-05-01] datenpflege | Einmalige Ausgaben auf Sammel-Kostenpositionen verdichtet
+- Anlass oder Quelle: Nutzerentscheidung, dass wiederkehrende Vorgänge eigene Kostenpositionen bleiben können, einmalige Ausgaben aber als zweite Ebene unter der Kategorie zusammengefasst werden sollen.
+- Vorbereitung:
+  - Vor der breiteren Datenänderung wurde eine lokale SQLite-Sicherung angelegt: `C:\Users\Lui\AppData\Local\Haushaltsbuch\Backups\Haushaltsbuch-vor-einmalige-sammelebenen-20260501-005134.sqlite`.
+  - Vor der nachträglichen L-Carnitin-Zuordnung wurde zusätzlich gesichert: `C:\Users\Lui\AppData\Local\Haushaltsbuch\Backups\Haushaltsbuch-vor-l-carnitin-sammelzuordnung-20260501-005441.sqlite`.
+  - Vor der Restnormalisierung klarer Einzelbeleg-Namen wurde zusätzlich gesichert: `C:\Users\Lui\AppData\Local\Haushaltsbuch\Backups\Haushaltsbuch-vor-restliche-einmalgruppen-20260501-005651.sqlite`.
+- Fachliche Regel:
+  - Kostenpositionen sollen bei einmaligen Ausgaben nicht jeden Einzelbeleg als Auswertungszeile zeigen.
+  - Einmalige Ausgaben werden innerhalb ihrer Kategorie auf einer zweiten fachlichen Ebene gebündelt.
+  - Der einzelne Beleg bleibt über Ausgabenbeleg, Dokument, Zahlung und Verknüpfung nachvollziehbar.
+- Datenpflege:
+  - `Medien` bündelt fünf Freizeit-Belege mit zusammen `45,12 EUR`.
+  - `Reise` bündelt zwei Freizeit-Belege mit zusammen `126,24 EUR`.
+  - `Verwarnungsgelder` bündelt drei Mobilitäts-/Auto-Belege mit zusammen `262,00 EUR`.
+  - `Handwerker` bündelt neun Handwerker-/Instandhaltungsbelege mit zusammen `17.904,12 EUR`.
+  - `Möbel` bündelt drei Haushaltsbelege mit zusammen `2.386,23 EUR`.
+  - `Haushaltsartikel` bündelt acht Haushaltsbelege mit zusammen `370,53 EUR`.
+  - `Hygiene` bündelt drei Gesundheitsbelege mit zusammen `149,61 EUR`.
+  - `Nahrungsergänzungsmittel` wurde um den Ausgabenbeleg `500 g L-Carnitin Base` ergänzt und umfasst jetzt vier Ausgabenbelege mit zusammen `102,61 EUR`.
+  - Weitere Einzelbeleg-Namen wurden auf fachliche Sammelgruppen normalisiert: `Technikartikel` (`168,73 EUR`), `Lebensmittel` (`102,10 EUR`), `Tiernahrung` (`147,40 EUR`), `Schuhe` (`219,70 EUR`), `Garantieverlängerungen` (`6,99 EUR`), `Einkommensteuer` (`-1.433,00 EUR`) und `Steuerberatung` (`247,40 EUR`).
+  - `ARGOS Glaukom-Screening` wurde der neuen Sammel-Kostenposition `Augenärztliche Leistungen` (`20,00 EUR`) zugeordnet; der Vorgang bleibt wegen nicht auslesbarem PDF als prüfpflichtig gekennzeichnet.
+  - Ersetzte Einzel-Kostenpositionen wurden gelöscht, nachdem Zahlungen, Dokumente, Importvorschläge und Ausgabenbelege auf die Zielpositionen umgehängt wurden.
+- Verifikation:
+  - Die Sammelpositionen zeigen jeweils dieselbe Summe wie die verknüpften Ausgabenbelege.
+  - Es gibt keine aktiven Ausgabenbelege ohne Kostenpositions-Zuordnung mehr.
+  - `Augenärztliche Leistungen`, `Einkommensteuer` und `Steuerberatung` bleiben inhaltlich prüfbar, weil dort noch fachliche Detailentscheidung oder Belegqualität offen sein kann.
+
+### [2026-05-01] datenpflege | Einmalige Gesundheitskostenpositionen zusammengefasst
+- Anlass oder Quelle: Nutzerhinweis, dass zu viele einzelne Kostenpositionen für Laborleistungen, einmalige Nahrungsergänzungsmittel und Dr.-Zell-Leistungen vorhanden waren.
+- Vorbereitung:
+  - Vor der Datenänderung wurde eine lokale SQLite-Sicherung angelegt: `C:\Users\Lui\AppData\Local\Haushaltsbuch\Backups\Haushaltsbuch-vor-kostenpositionen-zusammenfassung-20260501-004152.sqlite`.
+- Änderung:
+  - Die Kostenposition `Laborleistungen` wurde als Sammelposition für sechs Ausgabenbelege angelegt beziehungsweise befüllt: Bioscientia Rechnung 5723025, Labor Vit D Omega 3, Labor bioaktive B-Vitamine, Laborleistung Beta-CrossLaps, Laborleistung TRAP 5b und Laborwerte Sabine.
+  - Die Kostenposition `Nahrungsergänzungsmittel` wurde als Sammelposition für drei einmalige Ausgabenbelege angelegt beziehungsweise befüllt: L-Carnitin sowie zwei apo-discounter/APO-Pharmacy-Belege.
+  - `Dr. Zell Gespräch` wurde mit `Dr. Zell ärztliche Leistungen` zu einer gemeinsamen Kostenposition zusammengeführt.
+  - Die ersetzten Einzel-Kostenpositionen wurden gelöscht, nachdem Zahlungen, Dokumente, Importvorschläge und Ausgabenbelege auf die Zielpositionen umgehängt wurden.
+  - Laufende oder wiederkehrende Positionen wie `pur.AG Einzugsverfahren ABO10670` und `Rimkus Hormonkapseln Ludwig` blieben bewusst getrennt.
+- Verifikation:
+  - Die alten Einzel-Kostenpositionen sind nicht mehr vorhanden.
+  - Die betroffenen Ausgabenbelege sind den drei Ziel-Kostenpositionen zugeordnet.
+  - Die betroffenen Quelldokumente zeigen auf die Ziel-Kostenpositionen.
+  - `npm run typecheck` erfolgreich.
+  - `git diff --check` erfolgreich.
+
+### [2026-05-01] umsetzung | Dokumente und Belege sortierbar gemacht
+- Anlass oder Quelle: Nutzerhinweis, dass `Dokumente / Belege` unterschiedlich sortierbar sein soll und insbesondere neu erstellte Einträge absteigend sichtbar sein müssen.
+- Änderung:
+  - Die Tabellenüberschriften in `Dokumente / Belege` sind sortierbar.
+  - Die Ansicht startet mit `Erstellt` absteigend, sodass zuletzt angelegte Dokumenteinträge oben stehen.
+  - Weitere Sortierungen sind für Datei, Typ, Anbieter, Belegdatum, Betrag, Status und Zuordnung möglich.
+  - Die Dokumentliste zeigt jetzt direkte Kostenpositionsverknüpfungen sowie indirekte Zuordnungen über Ausgabenbelege.
+  - Im aufgeklappten Dokumentformular gibt es einen schreibgeschützten Bereich `Verknüpfungen`.
+  - Verknüpfungen bieten im Detailbereich Absprungknöpfe zu `Ausgabenbelege` und `Kostenpositionen`; die Zielseiten übernehmen den Suchbegriff aus dem Link.
+  - Beim Anklicken einer Dokumentzeile springt die Ansicht direkt zum Bearbeitungsbereich.
+  - Die Tabellenzeilen bleiben kompakt; Absprungknöpfe werden nicht direkt in jeder Tabellenzeile angezeigt.
+  - Die Dokumentliste kann nach Importstatus gefiltert werden.
+  - Die Zuordnungsspalte der Dokumentliste bricht mehrzeilig um, damit lange Zuordnungen nicht nur per horizontalem Scrollen sichtbar sind.
+  - Der Amazon-Textimport in `Ausgabenbelege` ist standardmäßig eingeklappt und kann bei Bedarf geöffnet werden.
+  - Ausgabenbelege zeigen ihre Kategorie in der Liste und können dort direkt einer Kategorie zugeordnet oder umgeordnet werden.
+  - Ausgabenbelege können nach Kategorie gefiltert werden, inklusive `nicht zugeordnet`.
+  - Ausgabenbelege zeigen die zugeordnete Kostenposition in einer eigenen Spalte.
+- Verifikation:
+  - `npm run typecheck` erfolgreich.
+  - `git diff --check` erfolgreich.
+  - `npm run build` durch Windows-Dateisperre bei `prisma generate` blockiert: `EPERM` beim Ersetzen von `node_modules\.prisma\client\query_engine-windows.dll.node`.
+
 ## 2026-04
 
 ### [2026-04-30] betrieb | Belegeingang verarbeitet und Ablagegrenzen festgelegt

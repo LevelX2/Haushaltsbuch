@@ -1,7 +1,7 @@
 ---
 typ: wissen
 status: aktiv
-letzte_aktualisierung: 2026-04-29
+letzte_aktualisierung: 2026-05-01
 quellen:
   - ../../01 Rohquellen/fachkonzepte/2026-04-28 Erste Projektvorgabe Haushaltskosten.md
   - ../../01 Rohquellen/fachkonzepte/2026-04-28 Zweite Projektvorgabe Fullstack MVP Haushaltsbuch.md
@@ -64,6 +64,27 @@ Bargeldabhebungen und interne Umbuchungen sind eigene Zahlungstypen, aber keine 
 Wenn mehrere Quellen denselben laufenden Vorgang erzeugen, etwa ein Abo-Start-Hinweis und eine spätere Rechnung, dürfen daraus nicht dauerhaft mehrere Kostenpositionen entstehen. Die fachlich richtige Behandlung ist eine Zusammenführung auf eine Ziel-Kostenposition. Dabei werden Zahlungen, Dokumente, Ausgabenbelege und Prüfvorschläge auf die Zielposition umgehängt. Die leere Dublette wird danach gelöscht, damit der Kostenpositionsbestand kein Altlastenregister wird. Die Quellenlage bleibt an der Zielposition über Dokumente, Ausgabenbelege, Zahlungen, Notizen und Versionen nachvollziehbar.
 
 Preisänderungen desselben Vertrags, Abos oder laufenden Vorgangs sollen nicht als neue Kostenposition entstehen. Sie werden als Version oder Historieneintrag derselben Kostenposition geführt. Nur ein fachlich neuer Vertrag, Anbieterwechsel oder klar getrenntes Produkt soll eine neue Kostenposition erzeugen.
+
+## Granularität von Kostenpositionen
+Kostenpositionen sollen nicht dauerhaft jeden einzelnen Beleg als eigene Auswertungszeile zeigen. Die sinnvolle Granularität hängt von der fachlichen Wiederkehr ab:
+
+- Wiederkehrende Vorgänge dürfen eigene Kostenpositionen bleiben, weil sie laufende Verpflichtungen, Verträge, Abos, Abschläge oder regelmäßige Bedarfe repräsentieren.
+- Einmalige Ausgaben werden innerhalb ihrer Kategorie auf einer zweiten fachlichen Ebene gebündelt, damit Auswertungen lesbar bleiben und nicht zu einer Belegliste werden.
+- Der einzelne Beleg bleibt als Ausgabenbeleg, Dokument, Zahlung oder Prüfvorgang nachvollziehbar; die Kostenposition ist die verdichtete Auswertungsebene.
+
+Beispiele für einmalige Sammel-Kostenpositionen sind `Laborleistungen`, `Nahrungsergänzungsmittel`, `Reise`, `Verwarnungsgelder`, `Haushaltsartikel`, `Hygiene`, `Handwerker`, `Möbel`, `Medien`, `Technikartikel`, `Lebensmittel`, `Tiernahrung`, `Schuhe`, `Garantieverlängerungen`, `Einkommensteuer` und `Steuerberatung`. Ärztliche Einzelbelege können ebenfalls zusammengeführt werden, wenn sie fachlich dieselbe zweite Ebene beschreiben, zum Beispiel `Dr. Zell ärztliche Leistungen`, `Professionelle Zahnreinigung` oder `Augenärztliche Leistungen`.
+
+## Dashboard-Auswertung nach Zeitraum
+Das Dashboard soll neben dem laufenden Fixkostenblock auch einmalige Ausgaben für einen frei gewählten Zeitraum sichtbar machen. Sinnvolle Einstiegssichten sind Jahr und Monat. Jahre können als direkte Auswahlknöpfe angeboten werden; bei Monatsansicht wird zusätzlich ein Monat gewählt.
+
+Einmalige Ausgaben werden im Dashboard vorrangig nach fachlichem Belegdatum ausgewertet. Fehlt dieses, kann ersatzweise das Fälligkeitsdatum oder das Anlagedatum des Ausgabenbelegs genutzt werden. Die Darstellung gruppiert nach der Sammel-Kostenposition, zeigt Kategorie, Summe und Anzahl der zugrunde liegenden Belege oder Zahlungen und kann die Einzelbelege aufklappen.
+
+Für eine Gesamtausgaben-Sicht dürfen wiederkehrende Ist-Zahlungen zusätzlich einbezogen werden. Dabei gilt zur Vermeidung von Doppelzählungen:
+- einmalige Ausgaben zählen vorrangig über Ausgabenbelege
+- wiederkehrende Ausgaben zählen über gebuchte Ist-Zahlungen
+- wenn eine einmalige Kostenposition im Zeitraum bereits über Ausgabenbelege gezählt wird, werden zugehörige Zahlungen nicht zusätzlich in derselben Zeitraumssicht gezählt
+
+Die Fixkosten-Auswertung im Dashboard ist ebenfalls zeitraumbezogen. Für Monatsansichten wird der erwartete Fixkostenblock des gewählten Monats berechnet. Für Jahresansichten wird die Summe der Monatswerte im gewählten Jahr gebildet und zusätzlich als durchschnittlicher Monatswert angezeigt. Preisänderungen, neue Abos, beendete Verträge und vergleichbare Veränderungen sollen dabei über `CostPositionVersion.validFrom`, `validTo`, Start- und Enddatum der Kostenposition berücksichtigt werden. Wenn keine passende Historienversion vorhanden ist, darf die Auswertung ersatzweise auf den aktuellen Kostenpositionswert zurückfallen; dieser Fallback ist fachlich weniger genau als gepflegte Versionen.
 
 ## Klassifikation
 Jeder Input erhält eine Wiederkehr:
