@@ -2,6 +2,39 @@
 
 ## 2026-04
 
+### [2026-04-30] betrieb | Belegeingang verarbeitet und Rechnungsablage festgelegt
+- Anlass oder Quelle: Nutzerwunsch, den aktuellen Belegeingang zu prüfen und verarbeitete Rechnungen künftig nach `C:\Users\Lui\OneDrive\Unterlagen\Rechnungen\<Jahr>` zu verschieben.
+- Fachliche und betriebliche Festlegung:
+  - Der Belegeingang unter `C:\Users\Lui\OneDrive\Haushaltsbuch\Import\Rechnungseingang` ist die Arbeitsliste für neue Dokumente.
+  - Eine optionale Datei `_Rechnungseingang_Index.jsonl` kann pro Zeile ein JSON-Objekt mit Metadaten zu genau einem Beleg enthalten.
+  - Vorhandene JSONL-Metadaten sollen als Vorbefüllung bevorzugt genutzt werden, die PDF bleibt aber die verbindliche Primärquelle.
+  - Fehlende, unsichere oder widersprüchliche Metadaten müssen gegen die PDF geprüft werden.
+  - Nach erfolgreicher Buchung kann der JSONL-Eintrag als verarbeitet markiert oder in ein verarbeitetes Log übernommen werden.
+  - Nach erfolgreicher Verarbeitung werden Rechnungen und rechnungsartige Belege in die dauerhafte Rechnungsablage des passenden Jahres verschoben.
+  - Die Anwendung speichert danach den endgültigen Dokumentpfad.
+  - Gegenbelege werden nicht als zusätzliche Ausgabe gezählt.
+- Verarbeitung:
+  - 20 Eingangsdokumente wurden verarbeitet und nach `C:\Users\Lui\OneDrive\Unterlagen\Rechnungen\2026` verschoben.
+  - 20 `Document`-Einträge, 18 neue Ausgabenbelege und 1 neue prüfpflichtige Kostenposition `Apple iCloud+ 50 GB` wurden angelegt.
+  - Der vorhandene APO-/PayPal-Vorgang über 35,37 EUR wurde auf die eigentliche apo-discounter-Rechnung als Hauptbeleg umgehängt, ohne eine doppelte Ausgabe anzulegen.
+  - Bioscientia 118,56 EUR und ARGOS 20,00 EUR bleiben wegen nicht textuell auslesbarer PDFs als Prüffälle sichtbar.
+- Verifikation:
+  - Vor dem Lauf wurde eine SQLite-Sicherung unter `C:\Users\Lui\AppData\Local\Haushaltsbuch\Haushaltsbuch.sqlite.vor-belegeingang-20260430-230832.bak` angelegt.
+  - Der Rechnungseingang enthält nach dem Lauf nur noch `_Haushaltsbuch_Rueckmeldung.md`.
+  - Stichproben zeigen Dokumentpfade in `C:\Users\Lui\OneDrive\Unterlagen\Rechnungen\2026`.
+
+### [2026-04-30] umsetzung | Dashboard-Jahresübersicht auf Fixkosten und 12 Monate ausgerichtet
+- Anlass oder Quelle: Nutzerwunsch, die Jahresübersicht stärker als Dashboard aufzubauen.
+- Änderungen:
+  - Die Startseitenübersicht stellt oben die erwartete monatliche Fixkostenbelastung als zentrale Kachel dar.
+  - Die Fixkosten werden darunter nach Gruppen aufgeschlüsselt und zeigen Monatswert, Jahreswert und Anzahl der Positionen.
+  - Die Ist-Kosten zeigen nun den laufenden Monat plus die 11 Monate davor.
+  - Die 12-Monats-Liste zeigt je Monat Summe und Anzahl der zugrunde liegenden Zahlungen.
+- Verifikation:
+  - `npm run typecheck` erfolgreich.
+  - Smoke-Check `GET /api/dashboard` auf dem laufenden lokalen Dev-Server erfolgreich.
+  - `npm run build` durch Windows-Dateisperre bei `prisma generate` blockiert, während ein lokaler Next-Dev-Server lief.
+
 ### [2026-04-30] umsetzung | Zahlungstypen für Bargeldabhebung und Umbuchung ergänzt
 - Anlass oder Quelle: Nutzerfrage zur Behandlung von Bargeldauszahlungen und regelmäßigen Überweisungen auf ein Aktiendepotkonto.
 - Fachliche Festlegung:

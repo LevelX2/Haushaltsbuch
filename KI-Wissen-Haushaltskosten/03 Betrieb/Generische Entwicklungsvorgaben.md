@@ -1,7 +1,7 @@
 ---
 typ: betrieb
 status: aktiv
-letzte_aktualisierung: 2026-04-28
+letzte_aktualisierung: 2026-04-30
 quellen:
   - ../../00 Steuerung/Regeldatei KI-Wissenspflege.md
   - ../../02 Wissen/Prozesse/Arbeitsworkflow Wissenspflege und Projektanfragen.md
@@ -34,3 +34,17 @@ Sie dient nicht dazu, jeden Einzelfall festzuhalten, sondern übertragbare Leitp
 - Bis weitere Vorgaben vorliegen, werden keine konkreten UI-, Architektur- oder Datenmodellentscheidungen festgeschrieben.
 - Neue Anforderungen werden zuerst als Rohquelle oder klar referenzierte Quelle aufgenommen und danach in passende Wissensseiten überführt.
 - Kostenperioden und durchschnittliche Monatskosten sind früh fachlich sauber zu definieren, bevor ein Datenmodell umgesetzt wird.
+
+## Dateiablage nach Belegeingang
+- Neue Belege werden im Eingang unter `C:\Users\Lui\OneDrive\Haushaltsbuch\Import\Rechnungseingang` geprüft.
+- Im Rechnungseingang kann zusätzlich die Metadaten-Datei `_Rechnungseingang_Index.jsonl` liegen.
+- Diese Datei wird von der Gmail- oder Dokumenteneingang-Routine gepflegt; jede Zeile ist ein eigenes JSON-Objekt zu genau einem Beleg.
+- Das Haushaltsbuch soll vorhandene JSONL-Metadaten bevorzugt als Vorbefüllung nutzen, um OCR-Arbeit zu sparen.
+- Die PDF-Datei bleibt trotzdem die verbindliche Primärquelle.
+- Wenn ein Metadatenfeld fehlt, unsicher ist oder widersprüchlich wirkt, muss die PDF geprüft werden.
+- Nach erfolgreicher Buchung kann der JSONL-Eintrag als verarbeitet markiert oder in ein verarbeitetes Log übernommen werden.
+- Nach erfolgreicher Verarbeitung werden Rechnungen und rechnungsartige Belege in die dauerhafte Unterlagenablage verschoben:
+  `C:\Users\Lui\OneDrive\Unterlagen\Rechnungen\<Jahr>`.
+- Der in der Anwendung gespeicherte Dokumentpfad muss nach dem Verschieben auf den endgültigen Ablagepfad zeigen.
+- Der Eingang soll nach einem abgeschlossenen Lauf nur noch die Rückmeldedatei oder bewusst offen gelassene Prüffälle enthalten.
+- Gegenbelege, zum Beispiel PayPal-Belege zu einer vorhandenen Rechnung, dürfen ebenfalls abgelegt werden, zählen aber nicht als zusätzliche Ausgabe.
