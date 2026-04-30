@@ -13,6 +13,7 @@ const paymentMatchStatusInput = z.object({
 
 const purchaseDocumentUpdateInput = z.object({
   recurrenceCandidate: z.enum(["RECURRING", "POTENTIAL_RECURRING", "ONE_TIME", "UNCLEAR"]).optional(),
+  categoryId: z.preprocess((value) => (value === "" ? null : value), z.string().nullable().optional()),
 });
 
 type ParsedPurchase = {

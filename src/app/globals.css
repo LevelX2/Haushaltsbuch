@@ -475,6 +475,264 @@ th {
   text-transform: uppercase;
 }
 
+.sort-button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  letter-spacing: inherit;
+  padding: 0;
+  text-align: left;
+  text-transform: inherit;
+}
+
+.sort-button:hover,
+.sort-button:focus-visible {
+  color: var(--accent);
+}
+
+.readonly-box {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+  padding: 10px 12px;
+}
+
+.assignment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.button.compact {
+  min-height: 30px;
+  padding: 5px 9px;
+  font-size: 12px;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip-button {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  padding: 6px 10px;
+  font-weight: 750;
+}
+
+.chip-button:hover {
+  background: var(--surface-muted);
+}
+
+.chip-button.active {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: #fff;
+}
+
+.toggle-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  color: var(--text);
+  font-weight: 750;
+}
+
+.toggle-field input {
+  width: auto;
+}
+
+.dashboard-filter-panel .toolbar-panel {
+  align-items: flex-end;
+}
+
+.month-picker {
+  flex: 1 1 360px;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.section-head .panel-title {
+  margin-bottom: 4px;
+}
+
+.spending-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.spending-summary div {
+  display: grid;
+  gap: 2px;
+  min-width: 132px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fbfa;
+  padding: 9px 10px;
+}
+
+.spending-summary span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.spending-summary strong {
+  font-size: 18px;
+}
+
+.spending-table {
+  table-layout: fixed;
+  min-width: 100%;
+}
+
+.spending-table th:nth-child(1),
+.spending-table td:nth-child(1) {
+  width: 30%;
+}
+
+.spending-table th:nth-child(2),
+.spending-table td:nth-child(2) {
+  width: 18%;
+}
+
+.spending-table th:nth-child(3),
+.spending-table td:nth-child(3),
+.spending-table th:nth-child(4),
+.spending-table td:nth-child(4) {
+  width: 14%;
+}
+
+.spending-table th:nth-child(5),
+.spending-table td:nth-child(5) {
+  width: 13%;
+}
+
+.spending-table th:nth-child(6),
+.spending-table td:nth-child(6) {
+  width: 11%;
+}
+
+.row-toggle {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 7px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+  font-weight: 800;
+}
+
+.row-toggle span {
+  overflow-wrap: anywhere;
+}
+
+.bar-fill.recurring {
+  background: var(--brand);
+}
+
+.spending-detail-row td {
+  background: #f8fbfa;
+  padding: 0;
+}
+
+.spending-detail-list {
+  display: grid;
+  gap: 0;
+}
+
+.spending-detail-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  border-bottom: 1px solid var(--line);
+  padding: 10px 12px 10px 38px;
+}
+
+.spending-detail-item:last-child {
+  border-bottom: 0;
+}
+
+.spending-detail-item strong:first-child {
+  overflow-wrap: anywhere;
+}
+
+.page > .spending-board {
+  order: 2;
+}
+
+.page > .year-overview-grid {
+  order: 3;
+}
+
+.page > .split-grid {
+  order: 4;
+}
+
+.documents-table {
+  table-layout: fixed;
+  min-width: 100%;
+}
+
+.documents-table th:nth-child(1),
+.documents-table td:nth-child(1),
+.documents-table th:nth-child(5),
+.documents-table td:nth-child(5) {
+  width: 94px;
+}
+
+.documents-table th:nth-child(3),
+.documents-table td:nth-child(3),
+.documents-table th:nth-child(4),
+.documents-table td:nth-child(4),
+.documents-table th:nth-child(6),
+.documents-table td:nth-child(6),
+.documents-table th:nth-child(7),
+.documents-table td:nth-child(7) {
+  width: 108px;
+}
+
+.documents-table th:nth-child(2),
+.documents-table td:nth-child(2),
+.documents-table th:nth-child(8),
+.documents-table td:nth-child(8) {
+  width: auto;
+}
+
+.documents-table td,
+.documents-table .document-path,
+.documents-table .assignment-cell {
+  overflow-wrap: anywhere;
+}
+
+.documents-table .assignment-cell strong {
+  display: block;
+}
+
 tr:last-child td {
   border-bottom: 0;
 }
@@ -820,6 +1078,18 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 
+  .section-head {
+    display: grid;
+  }
+
+  .spending-summary {
+    justify-content: stretch;
+  }
+
+  .spending-summary div {
+    min-width: 0;
+  }
+
   .review-panel {
     max-height: none;
   }
@@ -849,6 +1119,15 @@ textarea:focus {
 
   .amount-stack {
     justify-items: start;
+  }
+
+  .spending-table {
+    min-width: 720px;
+  }
+
+  .spending-detail-item {
+    grid-template-columns: 1fr;
+    padding-left: 12px;
   }
 
   .nav-group {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, ClipboardPaste, Link2, RefreshCw, Upload, X } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, ClipboardPaste, Link2, RefreshCw, Upload, X } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { formatDate } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
@@ -22,6 +22,8 @@ type PurchaseDocument = {
   recurrenceCandidate: string;
   confidenceStatus: string;
   notes?: string | null;
+  categoryId?: string | null;
+  category?: { id: string; name: string } | null;
   linkedCostPosition?: { title: string } | null;
   items: Array<{ id: string; title: string }>;
   paymentMatches: Array<{
@@ -39,6 +41,12 @@ type PurchaseDocument = {
       description?: string | null;
     };
   }>;
+};
+
+type Category = {
+  id: string;
+  name: string;
+  active: boolean;
 };
 
 type ImportResult = {
@@ -96,21 +104,29 @@ const recurrenceOptions = [
 
 export function PurchaseDocumentsWorkspace() {
   const [documents, setDocuments] = useState<PurchaseDocument[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
+  const [isImportPanelOpen, setIsImportPanelOpen] = useState(false);
   const [matchFilter, setMatchFilter] = useState("ALL");
   const [documentStatusFilter, setDocumentStatusFilter] = useState("ALL");
   const [recurrenceFilter, setRecurrenceFilter] = useState("ALL");
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [documentSearch, setDocumentSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
   async function load() {
     try {
-      setDocuments(await api<PurchaseDocument[]>("/api/purchase-documents"));
+      const [nextDocuments, nextCategories] = await Promise.all([
+        api<PurchaseDocument[]>("/api/purchase-documents"),
+        api<Category[]>("/api/categories"),
+      ]);
+      setDocuments(nextDocuments);
+      setCategories(nextCategories.filter((category) => category.active));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -118,6 +134,13 @@ export function PurchaseDocumentsWorkspace() {
 
   useEffect(() => {
     void load();
+  }, []);
+
+  useEffect(() => {
+    const query = getUrlSearchParam("q");
+    if (query) {
+      setDocumentSearch(query);
+    }
   }, []);
 
   const stats = useMemo(() => {
@@ -139,10 +162,11 @@ export function PurchaseDocumentsWorkspace() {
           matchesDateRange(document, dateFrom, dateTo) &&
           (matchFilter === "ALL" || matchState === matchFilter) &&
           (documentStatusFilter === "ALL" || document.status === documentStatusFilter) &&
-          (recurrenceFilter === "ALL" || document.recurrenceCandidate === recurrenceFilter)
+          (recurrenceFilter === "ALL" || document.recurrenceCandidate === recurrenceFilter) &&
+          (categoryFilter === "ALL" || (categoryFilter === "UNASSIGNED" ? !document.categoryId : document.categoryId === categoryFilter))
         );
       }),
-    [dateFrom, dateTo, documents, documentSearch, documentStatusFilter, matchFilter, recurrenceFilter],
+    [categoryFilter, dateFrom, dateTo, documents, documentSearch, documentStatusFilter, matchFilter, recurrenceFilter],
   );
 
   async function importAmazonText(event: React.FormEvent) {
@@ -230,6 +254,34 @@ export function PurchaseDocumentsWorkspace() {
     }
   }
 
+  async function updateCategory(documentId: string, categoryId: string) {
+    setError(null);
+    setMessage(null);
+    const category = categories.find((item) => item.id === categoryId) ?? null;
+    setDocuments((current) =>
+      current.map((document) =>
+        document.id === documentId
+          ? {
+              ...document,
+              categoryId: category?.id ?? null,
+              category: category ? { id: category.id, name: category.name } : null,
+            }
+          : document,
+      ),
+    );
+    try {
+      await api(`/api/purchase-documents/${documentId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ categoryId }),
+      });
+      setMessage("Kategorie aktualisiert.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      await load();
+    }
+  }
+
   return (
     <div className="page">
       <PageHeader
@@ -267,32 +319,47 @@ export function PurchaseDocumentsWorkspace() {
         </div>
       </section>
 
-      <form className="panel" onSubmit={importAmazonText}>
-        <h2 className="panel-title">Amazon-Bestellseite importieren</h2>
-        <div className="field">
-          <label htmlFor="amazonText">Kopierter Seitentext</label>
-          <textarea
-            id="amazonText"
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            placeholder="Amazon-Bestellseite im Browser markieren, kopieren und hier einfügen."
-            rows={9}
-          />
-        </div>
-        <div className="toolbar" style={{ marginTop: 14 }}>
-          <button className="button" disabled={isImporting || text.trim().length < 20} type="submit">
-            <Upload size={17} /> Importieren
-          </button>
-          <button
-            className="button secondary"
-            onClick={pasteFromClipboard}
-            type="button"
-            title="Aus Zwischenablage einfügen"
-          >
-            <ClipboardPaste size={17} /> Einfügen
-          </button>
-          <span className="toolbar-note">Dubletten werden über Quelle und Bestellnummer übersprungen.</span>
-        </div>
+      <form className="panel collapsible-panel" onSubmit={importAmazonText}>
+        <button
+          className="panel-toggle"
+          type="button"
+          onClick={() => setIsImportPanelOpen((current) => !current)}
+          aria-expanded={isImportPanelOpen}
+        >
+          <span>
+            {isImportPanelOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+            <span className="panel-title">Amazon-Bestellseite importieren</span>
+          </span>
+          <span className="small">{isImportPanelOpen ? "Einklappen" : "Bei Bedarf ausklappen"}</span>
+        </button>
+        {isImportPanelOpen ? (
+          <>
+            <div className="field">
+              <label htmlFor="amazonText">Kopierter Seitentext</label>
+              <textarea
+                id="amazonText"
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                placeholder="Amazon-Bestellseite im Browser markieren, kopieren und hier einfügen."
+                rows={9}
+              />
+            </div>
+            <div className="toolbar" style={{ marginTop: 14 }}>
+              <button className="button" disabled={isImporting || text.trim().length < 20} type="submit">
+                <Upload size={17} /> Importieren
+              </button>
+              <button
+                className="button secondary"
+                onClick={pasteFromClipboard}
+                type="button"
+                title="Aus Zwischenablage einfügen"
+              >
+                <ClipboardPaste size={17} /> Einfügen
+              </button>
+              <span className="toolbar-note">Dubletten werden über Quelle und Bestellnummer übersprungen.</span>
+            </div>
+          </>
+        ) : null}
       </form>
 
       <section className="panel toolbar-panel">
@@ -350,7 +417,19 @@ export function PurchaseDocumentsWorkspace() {
             ))}
           </select>
         </label>
-        {documentSearch || dateFrom || dateTo || matchFilter !== "ALL" || documentStatusFilter !== "ALL" || recurrenceFilter !== "ALL" ? (
+        <label className="toolbar-field" htmlFor="categoryFilter">
+          <span className="field-label">Kategorie</span>
+          <select id="categoryFilter" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+            <option value="ALL">alle</option>
+            <option value="UNASSIGNED">nicht zugeordnet</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        {documentSearch || dateFrom || dateTo || matchFilter !== "ALL" || documentStatusFilter !== "ALL" || recurrenceFilter !== "ALL" || categoryFilter !== "ALL" ? (
           <button
             className="button secondary"
             onClick={() => {
@@ -360,6 +439,7 @@ export function PurchaseDocumentsWorkspace() {
               setMatchFilter("ALL");
               setDocumentStatusFilter("ALL");
               setRecurrenceFilter("ALL");
+              setCategoryFilter("ALL");
             }}
             type="button"
             title="Filter zurücksetzen"
@@ -381,6 +461,8 @@ export function PurchaseDocumentsWorkspace() {
               <th>Betrag</th>
               <th>Status</th>
               <th>Wiederkehr</th>
+              <th>Kategorie</th>
+              <th>Kostenposition</th>
               <th>Beleg</th>
               <th>Abgleich</th>
             </tr>
@@ -412,12 +494,33 @@ export function PurchaseDocumentsWorkspace() {
                   </select>
                 </td>
                 <td>
+                  <select
+                    aria-label="Kategorie"
+                    value={document.categoryId ?? ""}
+                    onChange={(event) => void updateCategory(document.id, event.target.value)}
+                  >
+                    <option value="">nicht zugeordnet</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                  {document.linkedCostPosition ? <div className="small">aus Kostenposition prüfen</div> : null}
+                </td>
+                <td>
+                  {document.linkedCostPosition ? (
+                    <strong>{document.linkedCostPosition.title}</strong>
+                  ) : (
+                    <span className="small">nicht zugeordnet</span>
+                  )}
+                </td>
+                <td>
                   <strong>{document.title}</strong>
                   <div className="small">
                     {document.items.length > 1 ? `${document.items.length} Positionen` : document.items[0]?.title ?? "keine Position"}
                   </div>
                   {document.notes ? <div className="small">{document.notes}</div> : null}
-                  {document.linkedCostPosition ? <div className="small">Kostenposition: {document.linkedCostPosition.title}</div> : null}
                 </td>
                 <td>
                   <PaymentMatchCell document={document} onUpdateMatchStatus={updateMatchStatus} />
@@ -426,7 +529,7 @@ export function PurchaseDocumentsWorkspace() {
             ))}
             {!filteredDocuments.length ? (
               <tr>
-                <td colSpan={9}>{documents.length ? "Keine Belege im aktuellen Filter." : "Noch keine Ausgabenbelege importiert."}</td>
+                <td colSpan={11}>{documents.length ? "Keine Belege im aktuellen Filter." : "Noch keine Ausgabenbelege importiert."}</td>
               </tr>
             ) : null}
           </tbody>
@@ -448,6 +551,7 @@ function matchesDocumentSearch(document: PurchaseDocument, query: string) {
       document.externalDocumentNumber,
       document.title,
       document.notes,
+      document.category?.name,
       document.linkedCostPosition?.title,
       ...document.items.map((item) => item.title),
     ]
@@ -488,6 +592,13 @@ function normalizeSearchText(value: string) {
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .replace(/\s+/g, " ");
+}
+
+function getUrlSearchParam(key: string) {
+  if (typeof window === "undefined") {
+    return "";
+  }
+  return new URLSearchParams(window.location.search).get(key)?.trim() ?? "";
 }
 
 function normalizeRecurrenceCandidate(value: string) {

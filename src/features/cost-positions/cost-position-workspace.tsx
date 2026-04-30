@@ -150,12 +150,12 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
 
   const pageCopy = pageText(mode);
 
-  async function load() {
+  async function load(queryOverride = query) {
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams();
-      if (query.trim()) params.set("q", query.trim());
+      if (queryOverride.trim()) params.set("q", queryOverride.trim());
       if (categoryFilter) params.set("categoryId", categoryFilter);
       if (statusFilter) params.set("status", statusFilter);
       if (recurrenceClassFilter !== "ALL") params.set("recurrenceClass", recurrenceClassFilter);
@@ -188,6 +188,15 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, sort, categoryFilter, statusFilter, recurrenceClassFilter]);
+
+  useEffect(() => {
+    const urlQuery = getUrlSearchParam("q");
+    if (urlQuery) {
+      setQuery(urlQuery);
+      void load(urlQuery);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const totals = useMemo(
     () => ({
@@ -355,7 +364,7 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
             <button className="button secondary" type="button" onClick={createNew} title="Neue Position">
               <Plus size={17} /> Neu
             </button>
-            <button className="button secondary" type="button" onClick={load} title="Liste aktualisieren">
+            <button className="button secondary" type="button" onClick={() => void load()} title="Liste aktualisieren">
               <Search size={17} /> Aktualisieren
             </button>
           </>
@@ -453,7 +462,7 @@ export function CostPositionWorkspace({ mode = "all" }: Props) {
                   <option value="title">Bezeichnung</option>
                 </select>
               </div>
-              <button className="button" type="button" onClick={load} title="Suchen">
+              <button className="button" type="button" onClick={() => void load()} title="Suchen">
                 <Search size={17} /> Suchen
               </button>
               {categoryFilter || statusFilter !== "ACTIVE" || recurrenceClassFilter !== (mode === "one-time" ? "ONE_TIME" : mode === "all" ? "RECURRING" : "ALL") ? (
@@ -981,4 +990,11 @@ function badgeTone(status: string) {
     return "muted" as const;
   }
   return "default" as const;
+}
+
+function getUrlSearchParam(key: string) {
+  if (typeof window === "undefined") {
+    return "";
+  }
+  return new URLSearchParams(window.location.search).get(key)?.trim() ?? "";
 }

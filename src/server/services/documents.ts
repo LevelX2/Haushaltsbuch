@@ -28,7 +28,15 @@ const documentInput = z.object({
 
 export async function listDocuments() {
   return prisma.document.findMany({
-    include: { provider: true, linkedCostPosition: true, linkedPayment: true },
+    include: {
+      provider: true,
+      linkedCostPosition: true,
+      linkedPayment: true,
+      purchaseDocuments: {
+        include: { linkedCostPosition: true },
+        orderBy: { createdAt: "desc" },
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
 }
