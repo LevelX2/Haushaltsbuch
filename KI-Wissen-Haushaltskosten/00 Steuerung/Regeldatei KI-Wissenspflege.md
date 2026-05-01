@@ -24,7 +24,7 @@ Diese Wissensbasis dient der dauerhaften, strukturierten und verlinkten Dokument
 3. Bezug zu bestehenden Wissensseiten prüfen.
 4. Betroffene Seiten aktualisieren oder neu anlegen.
 5. Verlinkungen und Quellenbasis ergänzen.
-6. Index und Log aktualisieren.
+6. Index aktualisieren und Log nach Relevanzregel ergänzen.
 7. Beachten, dass eine einzelne Quelle mehrere Wissensseiten berühren kann.
 
 ## Antwortregeln
@@ -53,6 +53,7 @@ Diese Wissensbasis dient der dauerhaften, strukturierten und verlinkten Dokument
 - `Index.md` ist ein inhaltsorientierter Katalog der wichtigsten Wissensseiten. Jeder Eintrag soll mindestens Link und Kurzbeschreibung tragen.
 - `Log.md` ist eine chronologische Verlaufsliste in absteigender Reihenfolge. Es nutzt Monatsblöcke im Format `## YYYY-MM`, der neueste Monat steht oben, und neue Einträge werden im obersten passenden Monatsblock direkt oben ergänzt.
 - Log-Einträge sollen mit parsebarem Datumspräfix beginnen, bevorzugt `### [YYYY-MM-DD] typ | titel`.
+- Das Log ist kein vollständiges Tätigkeitsjournal. Es dokumentiert relevante Entwicklungsänderungen, Entscheidungen, Verifikationen, Risiken, Abschlussstände und wesentliche Projektvorgänge; einzelne Nutzdatenaktionen, Buchungen, Importentwürfe oder Datenpflegevorgänge gehören nur hinein, wenn daraus Entwicklungsrelevanz entsteht.
 - `Aktueller Projektstatus.md` ist eine verdichtete Zustandsübersicht des aktuellen Stands und kein Changelog. Die Seite soll den Projektstand als Snapshot zeigen, nicht die zeitliche Abfolge der Änderungen nacherzählen.
 - Für `Aktueller Projektstatus.md` sind kompakte Rubriken wie `Umgesetzt`, `Teilweise umgesetzt`, `Offen` und `Wichtige Grenzen` zu bevorzugen. Detailverlauf, Verifikationen und einzelne Umsetzungsschritte gehören stattdessen ins `Log.md`.
 - Für externe Webquellen soll nach Möglichkeit ein lokaler Snapshot in `01 Rohquellen` abgelegt werden. Wenn das nicht möglich ist, wird mindestens eine Rohquellen-Referenz mit URL und Abrufdatum angelegt.

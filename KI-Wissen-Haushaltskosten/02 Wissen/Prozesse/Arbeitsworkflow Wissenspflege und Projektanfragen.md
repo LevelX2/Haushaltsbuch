@@ -26,8 +26,8 @@ Dieser Workflow beschreibt, wie die Wissensbasis im Alltag genutzt und gepflegt 
 - Neue Quellen werden als Rohquellen aufgenommen und in bestehendes Wissen integriert.
 - Projektfragen werden zuerst gegen die Wissensbasis beantwortet.
 - Wiederverwendbare Ergebnisse aus Analysen, Entscheidungen oder Aufgaben fließen zurück in die Wissensbasis.
-- Zustandsübersichten und Chronik bleiben getrennt: `Aktueller Projektstatus` zeigt den verdichteten Ist-Zustand, das `Log` hält die zeitliche Abfolge fest.
-- Das `Log` bleibt dabei schnell lesbar: Monatsblöcke stehen absteigend, und neue Einträge werden im neuesten passenden Monatsblock oben ergänzt.
+- Zustandsübersichten und Chronik bleiben getrennt: `Aktueller Projektstatus` zeigt den verdichteten Ist-Zustand, das `Log` hält relevante zeitliche Abfolgen, Entscheidungen, Verifikationen und Abschlussstände fest.
+- Das `Log` bleibt dabei schnell lesbar: Monatsblöcke stehen absteigend, neue Einträge werden im neuesten passenden Monatsblock oben ergänzt, und geloggt wird nur nach Relevanzregel.
 
 ## Wann der Workflow genutzt wird
 - wenn eine neue Quelle zum Projekt auftaucht
@@ -46,7 +46,7 @@ Dieser Workflow beschreibt, wie die Wissensbasis im Alltag genutzt und gepflegt 
 4. Bestehende Seiten aktualisieren oder neue Seiten anlegen.
 5. Verlinkungen und Quellenbasis ergänzen.
 6. Index aktualisieren, falls neue relevante Seiten entstanden sind.
-7. Eintrag im Log im neuesten passenden Monatsblock oben ergänzen.
+7. Log nach Relevanzregel im neuesten passenden Monatsblock oben ergänzen.
 
 ## Fall 2: Frage zum Projekt beantworten
 ### Typischer Auslöser
@@ -68,11 +68,11 @@ Dieser Workflow beschreibt, wie die Wissensbasis im Alltag genutzt und gepflegt 
 2. Passende Wissensseite aktualisieren oder neue Seite anlegen.
 3. Bei Statuswissen bewusst trennen:
    - `Aktueller Projektstatus` nur als verdichteten Snapshot aktualisieren.
-   - `Log` für zeitliche Abfolge, Verifikation und konkrete Änderungsschritte ergänzen; neue Einträge stehen im passenden Monatsblock oben.
+   - `Log` nur für relevante zeitliche Abfolge, Entscheidungen, Verifikation, Risiken oder Abschlussstände ergänzen; neue Einträge stehen im passenden Monatsblock oben.
 4. Quellenbasis ergänzen:
    - Chat-Ergebnis nur dann, wenn es auf klar benennbaren Projektquellen oder verifizierter Analyse beruht.
    - Bei Codebezug bevorzugt auf Repo-Quellen oder konkrete Dateien verweisen.
-5. Index und Log nachziehen.
+5. Index nachziehen und Log nur bei relevanter Entwicklungsänderung, Entscheidung, Verifikation, Risiko oder Abschlussstand ergänzen.
 
 ## Fall 4: Wissensbasis health-checken
 ### Typischer Auslöser

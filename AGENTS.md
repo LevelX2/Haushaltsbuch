@@ -155,13 +155,15 @@ Ausnahmen:
 
 ## Abschlusskommandos
 
-Wenn der Nutzer `Finito`, `Finale`, `Endfinale` oder `Ende` schreibt, gelten grundsätzlich die globalen Abschlusskommandos aus dem Haupt-Vault. Falls `AGENTS.local.md` vorhanden ist, ist dessen Referenz auf die globale Definition führend.
+Wenn der Nutzer `Finito`, `Ende`, `Finale` oder `Endfinale` schreibt, gelten grundsätzlich die globalen Abschlusskommandos aus dem Skill `abschlusskommandos`.
+
+Das persönliche Haupt-Vault `mein-wissen` wird auf den Systemen des Nutzers vorausgesetzt. Wenn der Skill lokal nicht installiert ist, soll `mein-wissen` über `MEIN_WISSEN_PATH` oder typische OneDrive-Pfade gesucht und der Skill aus `07 Codex/skills/abschlusskommandos/` installiert werden. Falls `AGENTS.local.md` vorhanden ist, kann dessen Referenz auf lokale Pfade und Projekttypen ergänzend genutzt werden. Private absolute Pfade gehören nicht in diese commitbare Datei.
 
 Wenn diese globale Auflösung in der aktuellen Umgebung nicht verfügbar ist, gilt als lokaler Minimalkontrakt:
 
-- `Finito` oder `Ende`: lokaler Abschluss ohne automatischen Merge nach `main` und ohne automatischen Push; alle offenen Änderungen und ungetrackten Dateien prüfen, klar einordenbare und fachlich abgeschlossene Änderungen in sinnvolle Commit-Blöcke aufteilen, committen und verbleibende offene oder unklare Punkte kompakt benennen.
-- `Finale`: zuerst denselben lokalen Abschluss wie bei `Finito` durchführen; danach den aktuellen Arbeitsbranch nach erfolgreichen Checks per Fast-Forward nach `main` übernehmen, Checks auf `main` erneut ausführen und `main` pushen, sofern alles sauber ist.
-- `Endfinale`: wie `Finale`; zusätzlich einen vollständigeren Verify-Lauf, Wissensbasis-/Statuspflege, Logprüfung und kompakten Restpunkte-Check durchführen.
+- `Finito` oder `Ende`: lokaler Abschluss ohne automatischen Merge und ohne automatischen Push; offene Änderungen und untracked Dateien prüfen, abgeschlossene Änderungen in sinnvolle Commit-Blöcke aufteilen, committen und offene Punkte kompakt benennen.
+- `Finale`: zuerst denselben lokalen Abschluss wie bei `Finito` durchführen; wenn nichts Relevantes offen ist, nach Projektregel nach `main` integrieren und bei eindeutigem Remote/GitHub-Modell pushen oder einen Pull Request erstellen.
+- `Endfinale`: zuerst erweiterten Verify-Lauf ausführen; nur bei Erfolg `Finale` ausführen; danach Wissenspflege-, Status- und Restpunkteprüfung nachziehen.
 
 Für dieses Projekt gilt ergänzend:
 
@@ -171,3 +173,4 @@ Für dieses Projekt gilt ergänzend:
 - offene Änderungen werden nicht pauschal in einen Sammelcommit geworfen
 - Änderungen, die offensichtlich unfertig, widersprüchlich, riskant oder nicht einordenbar sind, werden nicht automatisch committet; sie werden als offene Punkte benannt
 - lokale Laufzeitdaten, Datenbanken, Builds, temporäre Dateien und private Overlays bleiben vom automatischen Committen ausgeschlossen
+- lokale und remote Arbeitsbranches dürfen nur aufgeräumt werden, wenn sie vollständig gemerged sind, seit mindestens drei Tagen nicht mehr verwendet wurden und kein offener Pull Request oder abweichender Remote-Stand dagegen spricht
