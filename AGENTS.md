@@ -138,6 +138,13 @@ Ausnahmen:
 - Wiederverwendbare Antworten, Entscheidungen, Analysen oder Risikoerklärungen nicht nur im Chat belassen, sondern als Wissensseiten oder Aktualisierungen zurückführen.
 - Bis zur technischen Scaffold-Entscheidung gibt es noch keine projektspezifischen App-Checks. Sobald Stack, Backend, Frontend oder Datenhaltung angelegt werden, sind Start- und Prüfkommandos in der Wissensbasis und im README nachzuziehen.
 
+## Import-Pattern und lokale Skills
+
+- Für Codex-gestützte Dokumenten-, Beleg- und Zahlungsimporte gilt das allgemeine repo-lokale Pattern in `docs/IMPORT_PATTERN.md`.
+- Falls lokal installiert, soll für solche Importaufgaben der persönliche Codex-Skill `haushaltskosten-import` verwendet werden.
+- Wenn der Skill nicht verfügbar ist, bleibt `docs/IMPORT_PATTERN.md` der Fallback und die technische Wahrheit.
+- Der Skill darf lokale Ausprägungen enthalten, aber diese commitbare Repo-Datei dupliziert keine privaten Pfade oder persönlichen Routinen.
+
 ## Wichtige Wissensbasis-Dateien
 
 - Einstieg: `KI-Wissen-Haushaltskosten/02 Wissen/00 Uebersichten/Index.md`

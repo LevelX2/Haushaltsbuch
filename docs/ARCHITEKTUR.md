@@ -14,6 +14,7 @@ Zentrale Leitregel: Jeder Input wird gespeichert oder im Prüfeingang gehalten, 
 - Reports werden serverseitig als PDF und XLSX erzeugt. Vor jedem neuen Reportlauf werden vorhandene PDF-/XLSX-Reports im Report-Stammordner nach `Archiv` verschoben, damit dort nur der aktuellste Lauf direkt sichtbar bleibt.
 - Backups kopieren die SQLite-Datei und erzeugen zusätzlich einen JSON-Gesamtexport.
 - Importe, Codex-Aktionen und automatische Zuordnungen laufen über eine eigene Importsteuerung mit Preview, Apply, Audit und Regeln. Direkte SQL-Schreibzugriffe durch KI oder Importprozesse sind nicht vorgesehen.
+- Das allgemeine technische Runbook für diese Arbeitsweise steht in `docs/IMPORT_PATTERN.md`.
 
 ## Laufzeitpfade
 Standard lokal:

@@ -36,6 +36,7 @@ Diese Seite beschreibt den aktuellen Projektstand als Snapshot. Zeitliche Abfolg
 - Ausgabenbelege können automatisch gegen echte Zahlungen abgeglichen werden. Starke Treffer werden als `AUTO_CONFIRMED`, plausible Treffer als `PROPOSED` und mehrdeutige Fälle als `AMBIGUOUS` im Zahlungsabgleich geführt.
 - Eine Importsteuerung mit `ImportRun`, `ImportRule`, `ImportDecision` und `AuditLog` ist angelegt. Codex- und Automatikaktionen können damit über App-APIs validiert, angewendet und nachvollzogen werden, ohne direkt SQL zu schreiben.
 - Die API unterstützt Preview/Apply-Kommandos für Importentscheidungen, Importregeln und Importläufe. Automatisch angewendete Entscheidungen bleiben als `AUTO_APPLIED`, blockierte Entscheidungen als Prüffälle sichtbar.
+- Das repo-lokale Import-Pattern ist in `docs/IMPORT_PATTERN.md` dokumentiert. Persönliche Codex-Skills können dieses Pattern lokal ausprägen, bleiben aber nachrangig zur Projekt-Doku.
 - Die Ausgabenbelegliste zeigt den Abgleichstatus als filterbares Feld mit offen, Vorschlag, mehrdeutig, abgeglichen und nicht zahlungsrelevant.
 - Früher als Zahlungen geführte Rechnungs-, Bescheid- und Forderungsdaten wurden als Ausgabenbelege übernommen; die alten Zahlungseinträge sind auf `IGNORED` gesetzt und erscheinen nicht mehr in der normalen Zahlungsliste.
 - PDF- und XLSX-Reports sowie SQLite-/JSON-Backups werden in die konfigurierten OneDrive-Ordner geschrieben.
@@ -61,3 +62,4 @@ Diese Seite beschreibt den aktuellen Projektstand als Snapshot. Zeitliche Abfolg
 - Die produktive SQLite-Datei liegt bewusst nicht in OneDrive.
 - Prisma Client wird genutzt; die lokale Tabelleninitialisierung erfolgt zusätzlich über `scripts/init-db.mjs`, weil Prisma Migrate/DB Push in der aktuellen Node-24-Umgebung ohne verwertbare Detailmeldung aussteigt.
 - Die erste V1 ist ein lokales MVP und noch keine vollständige Finanz-, Bank- oder Dokumentenanalyse.
+- Persönliche Skills und lokale Pfade gehören nicht in die commitbare Projekt-Doku; das Repository beschreibt nur das allgemeine Import-Pattern.

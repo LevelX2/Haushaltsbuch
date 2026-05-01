@@ -2,6 +2,14 @@
 
 ## 2026-05
 
+### [2026-05-01] dokumentation | Import-Pattern und persönlicher Skill getrennt
+- Anlass oder Quelle: Nutzerwunsch nach einem zweistufigen Modell aus repo-lokalem allgemeinem Import-Pattern und persönlichem Codex-Skill `haushaltskosten-import`.
+- Änderung:
+  - Das allgemeine Import-Pattern wurde in `docs/IMPORT_PATTERN.md` dokumentiert.
+  - `AGENTS.md` verweist knapp auf das Pattern und auf den lokalen Skill, falls installiert.
+  - Die Wissensbasis trennt nun repo-lokale technische Wahrheit und persönliche Skill-Ausprägung.
+  - Der persönliche Skill wurde so angepasst, dass er zuerst das repo-lokale Pattern liest und API-Details nicht führend dupliziert.
+
 ### [2026-05-01] umsetzung | Importsteuerung mit Regeln, Entscheidungen und Audit ergänzt
 - Anlass oder Quelle: Nutzeranforderung, dass Codex und automatische Importe Belege künftig über definierte App-APIs zuordnen sollen, ohne direkte SQL-Bearbeitung und ohne dauernde manuelle Bestätigung bei bekannten Mustern.
 - Änderung:

@@ -22,6 +22,7 @@ tags:
 - Die Anwendung läuft lokal im Browser und speichert die produktive SQLite-Datenbank im AppData-Ordner.
 - OneDrive wird für Reports, Importordner, Backup und Export genutzt.
 - Automatische Import- und Codex-Zuordnungen laufen über App-APIs mit Preview, Apply, Regeln und Audit statt über direkte SQL-Schreibzugriffe.
+- Das allgemeine Import-Pattern ist repo-lokal dokumentiert; persönliche Codex-Skills dürfen nur lokale Ausprägungen dieses Patterns sein.
 - Die Projektumgebung bleibt auf wiki-first Arbeit, lokale Agent-Regeln und Anbindung an das Haupt-Vault vorbereitet.
 
 ## Fachliches Zielbild

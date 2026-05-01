@@ -40,6 +40,7 @@ tags:
 - [[../../03 Betrieb/Log]]
 - [[../../03 Betrieb/Qualitaetspruefung]]
 - [[../../03 Betrieb/Generische Entwicklungsvorgaben]]: wiederverwendbare Entwicklungsregeln und lokale Deltas für dieses Projekt.
+- `../../../docs/IMPORT_PATTERN.md`: repo-lokales Runbook für Importentscheidungen, Preview/Apply, Regeln und Audit.
 
 ## Rohquellen
 - [[../../01 Rohquellen/fachkonzepte/2026-04-28 Erste Projektvorgabe Haushaltskosten]]: erste Projektvorgabe aus dem Startauftrag.
