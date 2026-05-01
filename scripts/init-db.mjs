@@ -205,6 +205,83 @@ CREATE TABLE IF NOT EXISTS "ImportSuggestion" (
 CREATE INDEX IF NOT EXISTS "ImportSuggestion_status_idx" ON "ImportSuggestion"("status");
 CREATE INDEX IF NOT EXISTS "ImportSuggestion_suggestionType_idx" ON "ImportSuggestion"("suggestionType");
 
+CREATE TABLE IF NOT EXISTS "ImportRun" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "source" TEXT NOT NULL,
+  "sourcePath" TEXT,
+  "sourceHash" TEXT,
+  "parserVersion" TEXT,
+  "actor" TEXT NOT NULL DEFAULT 'SYSTEM',
+  "status" TEXT NOT NULL DEFAULT 'RUNNING',
+  "parsedCount" INTEGER NOT NULL DEFAULT 0,
+  "createdCount" INTEGER NOT NULL DEFAULT 0,
+  "updatedCount" INTEGER NOT NULL DEFAULT 0,
+  "skippedCount" INTEGER NOT NULL DEFAULT 0,
+  "errorCount" INTEGER NOT NULL DEFAULT 0,
+  "summaryJson" TEXT,
+  "message" TEXT,
+  "startedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "finishedAt" DATETIME
+);
+CREATE INDEX IF NOT EXISTS "ImportRun_source_idx" ON "ImportRun"("source");
+CREATE INDEX IF NOT EXISTS "ImportRun_status_idx" ON "ImportRun"("status");
+CREATE INDEX IF NOT EXISTS "ImportRun_startedAt_idx" ON "ImportRun"("startedAt");
+
+CREATE TABLE IF NOT EXISTS "ImportRule" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "name" TEXT NOT NULL,
+  "description" TEXT,
+  "source" TEXT,
+  "action" TEXT NOT NULL,
+  "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+  "priority" INTEGER NOT NULL DEFAULT 100,
+  "confidenceThreshold" REAL NOT NULL DEFAULT 0.86,
+  "sampleRate" REAL NOT NULL DEFAULT 0.1,
+  "matchJson" TEXT NOT NULL DEFAULT '{}',
+  "actionJson" TEXT NOT NULL DEFAULT '{}',
+  "targetEntityType" TEXT,
+  "targetEntityId" TEXT,
+  "applicationCount" INTEGER NOT NULL DEFAULT 0,
+  "errorCount" INTEGER NOT NULL DEFAULT 0,
+  "lastAppliedAt" DATETIME,
+  "notes" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS "ImportRule_status_idx" ON "ImportRule"("status");
+CREATE INDEX IF NOT EXISTS "ImportRule_source_idx" ON "ImportRule"("source");
+CREATE INDEX IF NOT EXISTS "ImportRule_action_idx" ON "ImportRule"("action");
+CREATE INDEX IF NOT EXISTS "ImportRule_priority_idx" ON "ImportRule"("priority");
+
+CREATE TABLE IF NOT EXISTS "ImportDecision" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "importRunId" TEXT,
+  "importRuleId" TEXT,
+  "action" TEXT NOT NULL,
+  "status" TEXT NOT NULL DEFAULT 'PREVIEWED',
+  "actor" TEXT NOT NULL DEFAULT 'CODEX',
+  "confidence" REAL NOT NULL DEFAULT 0,
+  "reason" TEXT,
+  "sourceEntityType" TEXT,
+  "sourceEntityId" TEXT,
+  "targetEntityType" TEXT,
+  "targetEntityId" TEXT,
+  "sourceHash" TEXT,
+  "sample" BOOLEAN NOT NULL DEFAULT false,
+  "payloadJson" TEXT NOT NULL DEFAULT '{}',
+  "validationJson" TEXT NOT NULL DEFAULT '[]',
+  "resultJson" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "appliedAt" DATETIME,
+  CONSTRAINT "ImportDecision_importRunId_fkey" FOREIGN KEY ("importRunId") REFERENCES "ImportRun" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT "ImportDecision_importRuleId_fkey" FOREIGN KEY ("importRuleId") REFERENCES "ImportRule" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+CREATE INDEX IF NOT EXISTS "ImportDecision_status_idx" ON "ImportDecision"("status");
+CREATE INDEX IF NOT EXISTS "ImportDecision_action_idx" ON "ImportDecision"("action");
+CREATE INDEX IF NOT EXISTS "ImportDecision_createdAt_idx" ON "ImportDecision"("createdAt");
+CREATE INDEX IF NOT EXISTS "ImportDecision_sourceEntityType_sourceEntityId_idx" ON "ImportDecision"("sourceEntityType", "sourceEntityId");
+CREATE INDEX IF NOT EXISTS "ImportDecision_targetEntityType_targetEntityId_idx" ON "ImportDecision"("targetEntityType", "targetEntityId");
+
 CREATE TABLE IF NOT EXISTS "PurchaseDocument" (
   "id" TEXT NOT NULL PRIMARY KEY,
   "source" TEXT NOT NULL,
@@ -274,6 +351,25 @@ CREATE TABLE IF NOT EXISTS "PaymentMatch" (
 CREATE UNIQUE INDEX IF NOT EXISTS "PaymentMatch_purchaseDocumentId_paymentId_key" ON "PaymentMatch"("purchaseDocumentId", "paymentId");
 CREATE INDEX IF NOT EXISTS "PaymentMatch_status_idx" ON "PaymentMatch"("status");
 CREATE INDEX IF NOT EXISTS "PaymentMatch_score_idx" ON "PaymentMatch"("score");
+
+CREATE TABLE IF NOT EXISTS "AuditLog" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "importDecisionId" TEXT,
+  "entityType" TEXT NOT NULL,
+  "entityId" TEXT NOT NULL,
+  "action" TEXT NOT NULL,
+  "actor" TEXT NOT NULL DEFAULT 'SYSTEM',
+  "beforeJson" TEXT,
+  "afterJson" TEXT,
+  "reason" TEXT,
+  "sourceHash" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "AuditLog_importDecisionId_fkey" FOREIGN KEY ("importDecisionId") REFERENCES "ImportDecision" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+CREATE INDEX IF NOT EXISTS "AuditLog_entityType_entityId_idx" ON "AuditLog"("entityType", "entityId");
+CREATE INDEX IF NOT EXISTS "AuditLog_action_idx" ON "AuditLog"("action");
+CREATE INDEX IF NOT EXISTS "AuditLog_actor_idx" ON "AuditLog"("actor");
+CREATE INDEX IF NOT EXISTS "AuditLog_createdAt_idx" ON "AuditLog"("createdAt");
 
 CREATE TABLE IF NOT EXISTS "ReportRun" (
   "id" TEXT NOT NULL PRIMARY KEY,

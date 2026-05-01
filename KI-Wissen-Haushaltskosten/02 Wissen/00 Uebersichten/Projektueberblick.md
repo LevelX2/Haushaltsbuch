@@ -1,7 +1,7 @@
 ---
 typ: uebersicht
 status: aktiv
-letzte_aktualisierung: 2026-04-28
+letzte_aktualisierung: 2026-05-01
 quellen:
   - ../../00 Projektstart.md
   - ../../01 Rohquellen/fachkonzepte/2026-04-28 Erste Projektvorgabe Haushaltskosten.md
@@ -21,6 +21,7 @@ tags:
 - Die technische Umsetzung ist als Next.js-Fullstack-App mit TypeScript, Prisma Client und SQLite angelegt.
 - Die Anwendung läuft lokal im Browser und speichert die produktive SQLite-Datenbank im AppData-Ordner.
 - OneDrive wird für Reports, Importordner, Backup und Export genutzt.
+- Automatische Import- und Codex-Zuordnungen laufen über App-APIs mit Preview, Apply, Regeln und Audit statt über direkte SQL-Schreibzugriffe.
 - Die Projektumgebung bleibt auf wiki-first Arbeit, lokale Agent-Regeln und Anbindung an das Haupt-Vault vorbereitet.
 
 ## Fachliches Zielbild
@@ -41,6 +42,7 @@ Im Mittelpunkt stehen:
 - Kostenpositionen, Zahlungen, Dokumente und Importvorschläge bleiben getrennte Objekte.
 - Befristung ist eine Eigenschaft, keine eigene Hauptklasse.
 - Import- und KI-Daten dürfen manuell bestätigte Daten nicht ungeprüft überschreiben.
+- Codex darf als KI-Akteur Belege analysieren und strukturierte Importentscheidungen über lokale App-APIs anwenden; die Anwendung validiert Relationen, Status und Überschreibungsregeln.
 - Einmalige Ausgaben zählen nicht automatisch in laufende monatliche Fixkosten.
 - Spätere Importquellen sind PDF, E-Mail, Kontoauszug und Amazon, zunächst aber nur vorbereitet.
 

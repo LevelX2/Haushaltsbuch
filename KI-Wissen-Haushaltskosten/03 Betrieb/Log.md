@@ -2,6 +2,26 @@
 
 ## 2026-05
 
+### [2026-05-01] umsetzung | Importsteuerung mit Regeln, Entscheidungen und Audit ergänzt
+- Anlass oder Quelle: Nutzeranforderung, dass Codex und automatische Importe Belege künftig über definierte App-APIs zuordnen sollen, ohne direkte SQL-Bearbeitung und ohne dauernde manuelle Bestätigung bei bekannten Mustern.
+- Änderung:
+  - Das Datenmodell wurde um `ImportRun`, `ImportRule`, `ImportDecision` und `AuditLog` erweitert.
+  - Die lokale SQLite-Initialisierung legt die neuen Tabellen, Fremdschlüssel und Indizes idempotent an.
+  - Neue API-Endpunkte für Importläufe, Importregeln sowie Preview/Apply von Importentscheidungen wurden ergänzt.
+  - Die Importentscheidungsschicht validiert Referenzen, Zielstatus, manuell bestätigte Daten, Automatikschwellen und destruktive Aktionen vor dem Schreiben.
+  - Angewendete Aktionen erzeugen kompakte Audit-Einträge mit Entität, Aktion, Actor, Kernwerten vor/nach der Änderung, Begründung und optionalem Quellenhash.
+  - CAMT- und Amazon-Importe erzeugen Importläufe.
+  - Der automatische Zahlungsabgleich sicherer Ausgabenbeleg-Treffer läuft über die neue Importentscheidungsschicht; unsichere Treffer bleiben als Prüfentscheidung sichtbar.
+  - Neue UI-Arbeitsbereiche `Importregeln` und `Importentscheidungen` zeigen Regeln, Automatikstatus, Stichproben, blockierte Entscheidungen und Auditspuren.
+  - JSON-Backups enthalten die neuen Importsteuerungs- und Audit-Tabellen.
+- Verifikation:
+  - `npm run prisma:generate` erfolgreich nach Stoppen laufender projektbezogener Next/Node-Prozesse, die die Prisma-Engine-DLL blockiert hatten.
+  - `npm run app:prepare` erfolgreich.
+  - `npm run typecheck` erfolgreich.
+  - `npm run build` erfolgreich.
+  - `git diff --check` erfolgreich.
+  - Lokale Rauchprüfung erfolgreich: `/api/health`, `/importregeln`, `/importentscheidungen`, `/api/import-rules`, `/api/import-decisions` und `/api/import-decisions/preview`.
+
 ### [2026-05-01] umsetzung | Dashboard-Auswertung für einmalige Ausgaben nach Zeitraum ergänzt
 - Anlass oder Quelle: Nutzerüberlegung, dass die neu zusammengefassten einmaligen Kostenpositionen im Dashboard nach Monat oder Jahr auswertbar sein sollen und optional zusammen mit wiederkehrenden Ist-Zahlungen eine Gesamtausgaben-Sicht ergeben können.
 - Änderung:

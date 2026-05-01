@@ -136,6 +136,17 @@ Relevante Informationen können sicher, geschätzt, automatisch erkannt, manuell
 
 KI- oder Importdaten dürfen nicht denselben Vertrauensstatus haben wie manuell bestätigte Daten und dürfen bestehende Daten nicht ungeprüft überschreiben.
 
+## Importsteuerung und Codex-Aktionen
+Automatische Zuordnungen sollen nicht durch direkte SQL-Änderungen entstehen. Importprozesse und Codex-Aktionen laufen über strukturierte App-Kommandos. Die Anwendung prüft vor dem Schreiben, ob referenzierte Objekte existieren, Zielobjekte fachlich beschreibbar sind, manuell bestätigte Daten geschützt bleiben und relationale Regeln eingehalten werden.
+
+Die Importsteuerung unterscheidet:
+- `ImportRun`: zusammenhängender Lauf einer Quelle oder Automatik.
+- `ImportRule`: wiederverwendbare Regel für bekannte Beleg- oder Zahlungmuster.
+- `ImportDecision`: einzelne Zuordnungs- oder Änderungsentscheidung mit Confidence, Begründung und Status.
+- `AuditLog`: kompakte Nachvollziehbarkeit angewendeter Änderungen mit Vorher-/Nachher-Kernwerten.
+
+Der Zielmodus ist offensiv automatisiert: bekannte oder sehr sichere Muster dürfen automatisch angewendet werden. Unsichere, blockierte oder neue Muster bleiben über Prüfeingang, Stichprobe oder Importentscheidungen sichtbar kontrollierbar.
+
 Wenn ein Beleg nicht ausreichend automatisch erkannt wird, muss im Prüfeingang eine manuelle Einordnung ergänzt werden können. Diese Einordnung beschreibt den fachlichen Inhalt oder Zweck des Belegs, zum Beispiel ein 30-Tage-Abo für Nahrungsergänzungsmittel und den Haushalts- oder Personenbezug. Zusätzlich soll im Prüfeingang eine Kostengruppe aus den gepflegten Kategorien angegeben werden können. Diese Angaben unterstützen die spätere korrekte Klassifikation, ohne den produktiven Bestand automatisch zu verändern.
 
 ## Zusammengesetzte Bescheide mit Vorauszahlungen

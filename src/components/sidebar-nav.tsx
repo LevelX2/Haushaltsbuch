@@ -13,7 +13,9 @@ import {
   Inbox,
   Landmark,
   ListChecks,
+  ListTree,
   ReceiptText,
+  Route,
   Settings,
   Tags,
   UsersRound,
@@ -52,6 +54,8 @@ const groups = [
     label: "Betrieb",
     items: [
       { href: "/reports", label: "Reports", icon: BarChart3 },
+      { href: "/importregeln", label: "Importregeln", icon: ListTree },
+      { href: "/importentscheidungen", label: "Importentscheidungen", icon: Route },
       { href: "/backup-export", label: "Backup / Export", icon: Archive },
       { href: "/einstellungen", label: "Einstellungen", icon: Settings },
     ],

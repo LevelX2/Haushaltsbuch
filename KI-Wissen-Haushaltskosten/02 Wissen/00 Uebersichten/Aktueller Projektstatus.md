@@ -1,7 +1,7 @@
 ---
 typ: uebersicht
 status: aktiv
-letzte_aktualisierung: 2026-04-29
+letzte_aktualisierung: 2026-05-01
 quellen:
   - ../../00 Projektstart.md
   - ../../03 Betrieb/Log.md
@@ -34,6 +34,8 @@ Diese Seite beschreibt den aktuellen Projektstand als Snapshot. Zeitliche Abfolg
 - API-Endpunkte für alle V1-Arbeitsbereiche sind angelegt.
 - Das Datenmodell unterscheidet Ausgabenbelege, Belegpositionen, Zahlungen und Zahlungsabgleiche; Amazon ist dabei nur die erste konkrete Importquelle.
 - Ausgabenbelege können automatisch gegen echte Zahlungen abgeglichen werden. Starke Treffer werden als `AUTO_CONFIRMED`, plausible Treffer als `PROPOSED` und mehrdeutige Fälle als `AMBIGUOUS` im Zahlungsabgleich geführt.
+- Eine Importsteuerung mit `ImportRun`, `ImportRule`, `ImportDecision` und `AuditLog` ist angelegt. Codex- und Automatikaktionen können damit über App-APIs validiert, angewendet und nachvollzogen werden, ohne direkt SQL zu schreiben.
+- Die API unterstützt Preview/Apply-Kommandos für Importentscheidungen, Importregeln und Importläufe. Automatisch angewendete Entscheidungen bleiben als `AUTO_APPLIED`, blockierte Entscheidungen als Prüffälle sichtbar.
 - Die Ausgabenbelegliste zeigt den Abgleichstatus als filterbares Feld mit offen, Vorschlag, mehrdeutig, abgeglichen und nicht zahlungsrelevant.
 - Früher als Zahlungen geführte Rechnungs-, Bescheid- und Forderungsdaten wurden als Ausgabenbelege übernommen; die alten Zahlungseinträge sind auf `IGNORED` gesetzt und erscheinen nicht mehr in der normalen Zahlungsliste.
 - PDF- und XLSX-Reports sowie SQLite-/JSON-Backups werden in die konfigurierten OneDrive-Ordner geschrieben.
@@ -41,6 +43,7 @@ Diese Seite beschreibt den aktuellen Projektstand als Snapshot. Zeitliche Abfolg
 
 ## Teilweise umgesetzt
 - Prüfeingang, Dokumente und Importvorschläge sind modelliert und manuell nutzbar. Für Ausgabenbelege existiert ein erster Amazon-Textimport; für Zahlungen existiert ein erster CAMT-ZIP-Import mit automatischem Abgleich. PDF- und E-Mail-Import sind noch offen.
+- Importregeln und Importentscheidungen sind als erste UI-Arbeitsbereiche vorhanden. Eine ausgereifte Regel-Lernlogik aus Nutzerkorrekturen ist vorbereitet, aber noch nicht fachlich feinjustiert.
 - Historische Werte sind über `CostPositionVersion` vorbereitet; eine ausgereifte Historien-UI gibt es noch nicht.
 - Plan/Ist ist durch getrennte Kostenpositionen und Zahlungen vorbereitet; automatische Abweichungserkennung ist noch offen.
 
@@ -48,6 +51,7 @@ Diese Seite beschreibt den aktuellen Projektstand als Snapshot. Zeitliche Abfolg
 - Automatische PDF- und E-Mail-Auswertung.
 - Fachliche UI-Verfeinerung für Ausgabenbelege, insbesondere Einordnung als wiederkehrend, befristet, einmalig, privat oder ignoriert.
 - Dublettenlogik über mehrere Quellen.
+- Ausbau der Regelqualität für vollautomatische Beleg-zu-Kostenposition-Zuordnung auf Basis realer Nutzungsfälle.
 - Wiederherstellung aus Backup als UI-Funktion.
 - Geplanter oder automatischer Reportlauf über Windows-Aufgabenplanung.
 - App-interner Fachwissenspool, falls später benötigt.

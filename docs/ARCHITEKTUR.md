@@ -13,6 +13,7 @@ Zentrale Leitregel: Jeder Input wird gespeichert oder im Prüfeingang gehalten, 
 - `node:sqlite` initialisiert das lokale Schema idempotent, weil die Prisma-Migrate-Engine in dieser Node-24-Umgebung ohne Detailfehler aussteigt.
 - Reports werden serverseitig als PDF und XLSX erzeugt. Vor jedem neuen Reportlauf werden vorhandene PDF-/XLSX-Reports im Report-Stammordner nach `Archiv` verschoben, damit dort nur der aktuellste Lauf direkt sichtbar bleibt.
 - Backups kopieren die SQLite-Datei und erzeugen zusätzlich einen JSON-Gesamtexport.
+- Importe, Codex-Aktionen und automatische Zuordnungen laufen über eine eigene Importsteuerung mit Preview, Apply, Audit und Regeln. Direkte SQL-Schreibzugriffe durch KI oder Importprozesse sind nicht vorgesehen.
 
 ## Laufzeitpfade
 Standard lokal:
@@ -90,6 +91,10 @@ Wichtige Tabellen:
 - `HouseholdScope`: optionaler Haushaltsbezug.
 - `Document`: Beleg-/Quelldokument als Metadaten, nicht als Blob.
 - `ImportSuggestion`: Prüfeingang für Vorschläge, Dubletten und unklare Inputs.
+- `ImportRun`: protokollierter Import- oder Automatiklauf mit Quelle, Ergebniszahlen und Status.
+- `ImportRule`: aktive, pausierte oder zu prüfende Regel für automatische Zuordnungen.
+- `ImportDecision`: einzelne validierte oder blockierte Entscheidung mit Aktion, Confidence, Regelbezug und Zielobjekt.
+- `AuditLog`: kompakte Auditspur für angewendete App-Kommandos ohne vollständige Rohprompts.
 - `ReportRun`: erzeugte Reportdateien.
 - `BackupRun`: erzeugte Sicherungen und Exporte.
 - `AppSetting`: lokale Pfade und spätere Betriebseinstellungen.
@@ -131,6 +136,12 @@ Alle Endpunkte liegen unter `src/app/api`.
 | `PATCH` | `/api/documents/[id]` | Dokumentmetadaten ändern |
 | `GET`/`POST` | `/api/import-suggestions` | Prüfeingang listen und manuell ergänzen |
 | `PATCH` | `/api/import-suggestions/[id]` | Prüfpunkt bearbeiten |
+| `GET`/`POST` | `/api/import-runs` | Importläufe anzeigen und registrieren |
+| `GET`/`POST` | `/api/import-rules` | Importregeln anzeigen und anlegen |
+| `PATCH` | `/api/import-rules/[id]` | Importregel bearbeiten, pausieren oder reaktivieren |
+| `GET` | `/api/import-decisions` | Importentscheidungen, Stichproben und blockierte Aktionen anzeigen |
+| `POST` | `/api/import-decisions/preview` | strukturiertes Importkommando validieren, ohne zu schreiben |
+| `POST` | `/api/import-decisions/apply` | validiertes Importkommando transaktional anwenden und auditieren |
 | `GET`/`PATCH` | `/api/settings` | Pfade lesen und speichern |
 | `GET`/`POST` | `/api/reports` | Reportläufe listen und Reports erzeugen |
 | `GET`/`POST` | `/api/backups` | Backupläufe listen und Backup erzeugen |
@@ -147,6 +158,8 @@ Die UI ist ein arbeitsorientiertes Web-Fachsystem:
 - `Anbieter`, `Kategorien`: Stammdatenpflege.
 - `Dokumente / Belege`: Quellenmetadaten.
 - `Prüfeingang`: Importvorschläge und unklare Inputs.
+- `Importregeln`: Automatikregeln mit Confidence-Schwelle, Stichprobenrate und Pausierungsstatus.
+- `Importentscheidungen`: Audit- und Kontrollsicht für automatische Anwendungen, Codex-Aktionen, Stichproben und blockierte Entscheidungen.
 - `Reports`: PDF/XLSX-Erzeugung.
 - `Backup / Export`: SQLite-Kopie und JSON-Gesamtexport.
 - `Einstellungen`: lokale und OneDrive-Pfade.

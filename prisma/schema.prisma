@@ -103,6 +103,47 @@ enum ReportStatus {
   FAILED
 }
 
+enum ImportRunStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+enum ImportRuleStatus {
+  ACTIVE
+  PAUSED
+  NEEDS_REVIEW
+}
+
+enum ImportActionType {
+  LINK_PURCHASE_DOCUMENT_TO_COST_POSITION
+  SET_PURCHASE_DOCUMENT_CATEGORY
+  SET_PURCHASE_DOCUMENT_RECURRENCE
+  CREATE_COST_POSITION_FROM_PURCHASE_DOCUMENT
+  LINK_PAYMENT_TO_COST_POSITION
+  CONFIRM_PAYMENT_MATCH
+  MARK_DOCUMENT_DUPLICATE
+  IGNORE_DOCUMENT
+  CREATE_OR_UPDATE_IMPORT_RULE
+}
+
+enum ImportDecisionStatus {
+  PREVIEWED
+  AUTO_APPLIED
+  APPLIED
+  NEEDS_REVIEW
+  BLOCKED
+  REJECTED
+  SUPERSEDED
+}
+
+enum AutomationActor {
+  CODEX
+  SYSTEM
+  USER
+}
+
 model CostPosition {
   id                   String             @id @default(cuid())
   title                String
@@ -289,6 +330,92 @@ model ImportSuggestion {
   @@index([suggestionType])
 }
 
+model ImportRun {
+  id            String          @id @default(cuid())
+  source        String
+  sourcePath    String?
+  sourceHash    String?
+  parserVersion String?
+  actor         AutomationActor @default(SYSTEM)
+  status        ImportRunStatus @default(RUNNING)
+  parsedCount   Int             @default(0)
+  createdCount  Int             @default(0)
+  updatedCount  Int             @default(0)
+  skippedCount  Int             @default(0)
+  errorCount    Int             @default(0)
+  summaryJson   String?
+  message       String?
+  startedAt     DateTime        @default(now())
+  finishedAt    DateTime?
+
+  decisions     ImportDecision[]
+
+  @@index([source])
+  @@index([status])
+  @@index([startedAt])
+}
+
+model ImportRule {
+  id                  String           @id @default(cuid())
+  name                String
+  description         String?
+  source              String?
+  action              ImportActionType
+  status              ImportRuleStatus @default(ACTIVE)
+  priority            Int              @default(100)
+  confidenceThreshold Float            @default(0.86)
+  sampleRate          Float            @default(0.1)
+  matchJson           String           @default("{}")
+  actionJson          String           @default("{}")
+  targetEntityType    String?
+  targetEntityId      String?
+  applicationCount    Int              @default(0)
+  errorCount          Int              @default(0)
+  lastAppliedAt       DateTime?
+  notes               String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  decisions           ImportDecision[]
+
+  @@index([status])
+  @@index([source])
+  @@index([action])
+  @@index([priority])
+}
+
+model ImportDecision {
+  id               String               @id @default(cuid())
+  importRunId      String?
+  importRuleId     String?
+  action           ImportActionType
+  status           ImportDecisionStatus @default(PREVIEWED)
+  actor            AutomationActor      @default(CODEX)
+  confidence       Float                @default(0)
+  reason           String?
+  sourceEntityType String?
+  sourceEntityId   String?
+  targetEntityType String?
+  targetEntityId   String?
+  sourceHash       String?
+  sample           Boolean              @default(false)
+  payloadJson      String               @default("{}")
+  validationJson   String               @default("[]")
+  resultJson       String?
+  createdAt        DateTime             @default(now())
+  appliedAt        DateTime?
+
+  importRun        ImportRun?           @relation(fields: [importRunId], references: [id], onDelete: SetNull)
+  importRule       ImportRule?          @relation(fields: [importRuleId], references: [id], onDelete: SetNull)
+  auditLogs        AuditLog[]
+
+  @@index([status])
+  @@index([action])
+  @@index([createdAt])
+  @@index([sourceEntityType, sourceEntityId])
+  @@index([targetEntityType, targetEntityId])
+}
+
 model PurchaseDocument {
   id                     String           @id @default(cuid())
   source                 String
@@ -366,6 +493,27 @@ model PaymentMatch {
   @@unique([purchaseDocumentId, paymentId])
   @@index([status])
   @@index([score])
+}
+
+model AuditLog {
+  id               String          @id @default(cuid())
+  importDecisionId String?
+  entityType       String
+  entityId         String
+  action           String
+  actor            AutomationActor @default(SYSTEM)
+  beforeJson       String?
+  afterJson        String?
+  reason           String?
+  sourceHash       String?
+  createdAt        DateTime        @default(now())
+
+  importDecision   ImportDecision? @relation(fields: [importDecisionId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([actor])
+  @@index([createdAt])
 }
 
 model ReportRun {

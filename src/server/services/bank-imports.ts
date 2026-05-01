@@ -26,6 +26,15 @@ type CamtTransaction = {
 
 export async function importCamtDirectory(raw: unknown) {
   const input = camtDirectoryImportInput.parse(raw);
+  const importRun = await prisma.importRun.create({
+    data: {
+      source: "CAMT_DIRECTORY",
+      sourcePath: input.directoryPath,
+      actor: "SYSTEM",
+      status: "RUNNING",
+      parserVersion: "camt-directory-v1",
+    },
+  });
   const entries = await fs.readdir(input.directoryPath, { withFileTypes: true });
   const archives = entries
     .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".zip"))
@@ -99,7 +108,7 @@ export async function importCamtDirectory(raw: unknown) {
     }
   }
 
-  return {
+  const result = {
     archives: archives.length,
     parsed,
     created,
@@ -107,6 +116,21 @@ export async function importCamtDirectory(raw: unknown) {
     skipped,
     errors,
   };
+  await prisma.importRun.update({
+    where: { id: importRun.id },
+    data: {
+      status: errors.length ? "PARTIAL" : "SUCCESS",
+      parsedCount: parsed,
+      createdCount: created,
+      updatedCount: updated,
+      skippedCount: skipped,
+      errorCount: errors.length,
+      summaryJson: JSON.stringify(result),
+      message: errors.length ? `${errors.length} Datei(en) mit Fehlern.` : null,
+      finishedAt: new Date(),
+    },
+  });
+  return result;
 }
 
 function parseCamtXml(xml: string, archiveName: string, xmlName: string): CamtTransaction[] {

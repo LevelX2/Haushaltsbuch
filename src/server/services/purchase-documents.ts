@@ -2,6 +2,7 @@ import { z } from "zod";
 import { eurosToCents } from "@/lib/money";
 import { normalizeName, timestampForFile } from "@/lib/format";
 import { prisma } from "@/server/prisma";
+import { applyImportDecision, pauseRulesForEntityCorrection, recordImportDecisionForReview } from "@/server/services/import-control";
 
 const amazonTextImportInput = z.object({
   text: z.string().min(20),
@@ -48,6 +49,14 @@ export async function listPurchaseDocuments() {
 }
 
 export async function autoMatchPurchaseDocuments() {
+  const importRun = await prisma.importRun.create({
+    data: {
+      source: "AUTO_MATCH_PURCHASE_DOCUMENTS",
+      actor: "SYSTEM",
+      status: "RUNNING",
+      parserVersion: "payment-match-v1",
+    },
+  });
   const [purchaseDocuments, payments] = await Promise.all([
     prisma.purchaseDocument.findMany({
       where: { status: { notIn: ["CANCELLED"] }, amountCents: { gt: 0 } },
@@ -91,46 +100,108 @@ export async function autoMatchPurchaseDocuments() {
           ? "AUTO_CONFIRMED"
           : "PROPOSED";
 
-    const result = await prisma.paymentMatch.upsert({
-      where: {
-        purchaseDocumentId_paymentId: {
+    if (status === "AUTO_CONFIRMED") {
+      const existing = await prisma.paymentMatch.findUnique({
+        where: {
+          purchaseDocumentId_paymentId: {
+            purchaseDocumentId: document.id,
+            paymentId: best.payment.id,
+          },
+        },
+      });
+      await applyImportDecision({
+        importRunId: importRun.id,
+        action: "CONFIRM_PAYMENT_MATCH",
+        actor: "SYSTEM",
+        confidence: best.score,
+        reason: best.reason,
+        sourceEntityType: "PURCHASE_DOCUMENT",
+        sourceEntityId: document.id,
+        targetEntityType: "PAYMENT",
+        targetEntityId: best.payment.id,
+        payload: {
           purchaseDocumentId: document.id,
           paymentId: best.payment.id,
+          paymentMatchId: existing?.id,
+          historicalMatch: true,
         },
-      },
-      update: {
-        status,
-        score: best.score,
-        reason: best.reason,
-        amountDeltaCents: best.amountDeltaCents,
-        dateDeltaDays: best.dateDeltaDays,
-      },
-      create: {
-        purchaseDocumentId: document.id,
-        paymentId: best.payment.id,
-        status,
-        score: best.score,
-        reason: best.reason,
-        amountDeltaCents: best.amountDeltaCents,
-        dateDeltaDays: best.dateDeltaDays,
-      },
-      select: { createdAt: true, updatedAt: true },
-    });
-
-    if (result.createdAt.getTime() === result.updatedAt.getTime()) {
-      created += 1;
-    } else {
-      updated += 1;
-    }
-
-    if (status === "AUTO_CONFIRMED") {
+      });
+      if (existing) {
+        updated += 1;
+      } else {
+        created += 1;
+      }
       autoConfirmed += 1;
-    } else if (status === "AMBIGUOUS") {
-      ambiguous += 1;
     } else {
-      proposed += 1;
+      const result = await prisma.paymentMatch.upsert({
+        where: {
+          purchaseDocumentId_paymentId: {
+            purchaseDocumentId: document.id,
+            paymentId: best.payment.id,
+          },
+        },
+        update: {
+          status,
+          score: best.score,
+          reason: best.reason,
+          amountDeltaCents: best.amountDeltaCents,
+          dateDeltaDays: best.dateDeltaDays,
+        },
+        create: {
+          purchaseDocumentId: document.id,
+          paymentId: best.payment.id,
+          status,
+          score: best.score,
+          reason: best.reason,
+          amountDeltaCents: best.amountDeltaCents,
+          dateDeltaDays: best.dateDeltaDays,
+        },
+        select: { createdAt: true, updatedAt: true },
+      });
+
+      if (result.createdAt.getTime() === result.updatedAt.getTime()) {
+        created += 1;
+      } else {
+        updated += 1;
+      }
+
+      await recordImportDecisionForReview({
+        importRunId: importRun.id,
+        action: "CONFIRM_PAYMENT_MATCH",
+        actor: "SYSTEM",
+        confidence: best.score,
+        reason: best.reason,
+        sourceEntityType: "PURCHASE_DOCUMENT",
+        sourceEntityId: document.id,
+        targetEntityType: "PAYMENT",
+        targetEntityId: best.payment.id,
+        payload: {
+          purchaseDocumentId: document.id,
+          paymentId: best.payment.id,
+          paymentMatchStatus: status,
+        },
+      });
+
+      if (status === "AMBIGUOUS") {
+        ambiguous += 1;
+      } else {
+        proposed += 1;
+      }
     }
   }
+
+  await prisma.importRun.update({
+    where: { id: importRun.id },
+    data: {
+      status: "SUCCESS",
+      parsedCount: purchaseDocuments.length,
+      createdCount: created,
+      updatedCount: updated,
+      skippedCount: unmatched,
+      summaryJson: JSON.stringify({ scannedPayments: payments.length, autoConfirmed, proposed, ambiguous, unmatched }),
+      finishedAt: new Date(),
+    },
+  });
 
   return {
     scannedPurchaseDocuments: purchaseDocuments.length,
@@ -146,7 +217,7 @@ export async function autoMatchPurchaseDocuments() {
 
 export async function updatePaymentMatchStatus(id: string, raw: unknown) {
   const input = paymentMatchStatusInput.parse(raw);
-  return prisma.paymentMatch.update({
+  const updated = await prisma.paymentMatch.update({
     where: { id },
     data: {
       status: input.status,
@@ -154,11 +225,15 @@ export async function updatePaymentMatchStatus(id: string, raw: unknown) {
     },
     include: { payment: { include: { provider: true } } },
   });
+  if (input.status === "REJECTED") {
+    await pauseRulesForEntityCorrection("PAYMENT_MATCH", id, "Automatische Zahlungszuordnung wurde manuell abgelehnt.");
+  }
+  return updated;
 }
 
 export async function updatePurchaseDocument(id: string, raw: unknown) {
   const input = purchaseDocumentUpdateInput.parse(raw);
-  return prisma.purchaseDocument.update({
+  const updated = await prisma.purchaseDocument.update({
     where: { id },
     data: input,
     include: {
@@ -171,10 +246,21 @@ export async function updatePurchaseDocument(id: string, raw: unknown) {
       paymentMatches: { include: { payment: { include: { provider: true } } }, orderBy: { score: "desc" } },
     },
   });
+  await pauseRulesForEntityCorrection("PURCHASE_DOCUMENT", id, "Ausgabenbeleg wurde nach automatischer Entscheidung manuell korrigiert.");
+  return updated;
 }
 
 export async function importAmazonOrderText(raw: unknown) {
   const input = amazonTextImportInput.parse(raw);
+  const importRun = await prisma.importRun.create({
+    data: {
+      source: "AMAZON_TEXT",
+      sourcePath: "import://amazon-orders",
+      actor: "SYSTEM",
+      status: "RUNNING",
+      parserVersion: "amazon-text-v1",
+    },
+  });
   const parsedOrders = parseAmazonOrders(input.text);
   const provider = await ensureProvider(amazonProviderName);
   const sourceDocument = await prisma.document.create({
@@ -239,13 +325,25 @@ export async function importAmazonOrderText(raw: unknown) {
     created += 1;
   }
 
-  return {
+  const result = {
     sourceDocument,
     parsed: parsedOrders.length,
     created,
     skipped,
     documents,
   };
+  await prisma.importRun.update({
+    where: { id: importRun.id },
+    data: {
+      status: "SUCCESS",
+      parsedCount: parsedOrders.length,
+      createdCount: created,
+      skippedCount: skipped,
+      summaryJson: JSON.stringify({ parsed: parsedOrders.length, created, skipped, sourceDocumentId: sourceDocument.id }),
+      finishedAt: new Date(),
+    },
+  });
+  return result;
 }
 
 function scorePaymentMatch(
